@@ -23,7 +23,9 @@ end
 if flag==1
 X_mags = abs(fft(signal1));
 fax_Hz = bin_vals*fs1/N;
-plot(fax_Hz(1:N_2), 10*log10(X_mags(1:N_2)))
+%plot(fax_Hz(1:N_2), 10*log10(X_mags(1:N_2)))
+%plot(fax_Hz(2000:3000), 10*log10(X_mags(2000:3000)))
+plot(fax_Hz(500:2000), 10*log10(X_mags(500:2000)))
 title('Single-sided Magnitude spectrum (Hertz)');
 else
 X_mags = abs(fftshift(fft(signal1)));
