@@ -83,11 +83,18 @@ if __name__=='__main__':
             tx_instances.append(0)
             counter_2 +=1
 
-    import pylab
-    pylab.plot(tx_instances)
-    pylab.show()
-    #a = np.array(tx_instances, dtype=np.float32)
-    #a.astype('float32').tofile('new_transmission.dat')
+    preamble=[]
+    for i in range(0,50):
+        preamble.append(1)
+    #print preamble
+    
+    tx_instances=preamble+tx_instances
+    #print tx_instances[0:70]
+    #import pylab
+    #pylab.plot(tx_instances)
+    #pylab.show()
+    a = np.array(tx_instances, dtype=np.float32)
+    a.astype('float32').tofile('preamble_new_transmission.dat')
     print "index= " ,index
     print "len of sorted tx indexes= " , len(sorted_tx_indexes)
     print "len of separated_tx= ", len(separated_tx)
