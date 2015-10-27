@@ -1,11 +1,7 @@
-'''
-This file generates the message on wire with BPSK modulation into consideration.
-Symbol -1, 1 are mapped to bits 1 and 0, while symbol 0 means nothing on the channel.
-It lets LO at transmitter transmit nothing.
-'''
 import reedsolo
 import random,binascii, sys,math
-
+import collections
+import numpy as np
 if __name__=='__main__':
     rs= reedsolo.RSCodec(32)
     message_to_encode = b'I am going to use RS Encoder. There is basically so much to do that I cannot believe. We need to do as much we can how much we can and keep doing it unless we get success in it and that is how the world works. Lets do it...'
@@ -22,66 +18,83 @@ if __name__=='__main__':
         justbits_1+=bin(c)[2:]
         bit_representation_message+=bin(c)[2:].zfill(8)
     print "length of bit representation of encoded message is ", len(bit_representation_message)
-    corrupted_message = encoded_message[:]
-    corrupted_message[2]=101
-    corrupted_message[1]=92
-    corrupted_message[3]=103
-    corrupted_message[5]=104
-    corrupted_message[9]=122
-    corrupted_message[8]=121
-    corrupted_message[17]=119
-    corrupted_message[13]=118
-    corrupted_message[16]=117
-    corrupted_message[13]=116
-    corrupted_message[10]=117
-    corrupted_message[18]=118
-    corrupted_message[19]=119
-    corrupted_message[24]=117
-    corrupted_message[23]=109
-    corrupted_message[22]=110
-    corrupted_message[21]=121
-
     error_bits, tx_instances, tx_indexes=[], [], []
     index, next_instance, error_count=0,0,0
 
-    assert( len(encoded_message) == len(corrupted_message))
-    assert len(bit_representation_message)*1.0/len(corrupted_message) ==8.0
+    assert len(bit_representation_message)*1.0/len(encoded_message) ==8.0
     #this is for finding out which bits were flipped in above corruption
-    for a,b in zip(encoded_message,corrupted_message):
-        error_count += bin(a ^ b).count("1")
         
-    print "the total number of bit flips done were ", error_count
-    list_1s = list(bit_representation_message)
-    sum_of_1s=sum([int(list_1s[i]) for i in range(0,len(list_1s))])
-    
     message_length_on_wire= len(bit_representation_message)*len(bit_representation_message)
     print "length of bit representation ", len(bit_representation_message), "message slots on wire(square) ", message_length_on_wire
     tx_indexes.append(0)
-    for j in range(0,len(bit_representation_message)-1):
-        next_instance=random.uniform(0,message_length_on_wire)
+    for j in range(1,len(bit_representation_message)):
+        next_instance=random.randint(0,message_length_on_wire)
         tx_indexes.append(int(next_instance))
-    new_tx= sorted(tx_indexes)
-
-    message_amp_representation=[]
-    for i in bit_representation_message:
-        if i == '0':
-            message_amp_representation.append(1)
+    sorted_tx_indexes= sorted(tx_indexes)
+    separated_tx=[]
+    sep_length=0
+    to_insert=[]
+    for i in range(0,len(sorted_tx_indexes)):
+        if  sorted_tx_indexes[i] -sorted_tx_indexes[i-1] >3:
+            separated_tx.append(sorted_tx_indexes[i-1])
+            sep_length +=1
         else:
-            message_amp_representation.append(-1)
+            to_insert.append(random.randint(sorted_tx_indexes[i],sorted_tx_indexes[i+1]+4))
 
-    #import pylab
-    #pylab.plot(tx_indexes)
-    #pylab.show()
-    for i in range(0,message_length_on_wire):
-        if i in new_tx:
-            tx_instances.append(message_amp_representation[index])
-            index = index+1
+    s1 = separated_tx +to_insert
+    separated_tx=sorted(s1)
+    for i in range(1,len(separated_tx)):
+        if  separated_tx[i] -separated_tx[i-1] <3:
+            print "Fucked"
+        else:
+            None
+
+
+
+
+
+    print "new seperated index ",len(separated_tx), "early sorted list length ",len(sorted_tx_indexes), "newly generated to insert ", len(to_insert)
+    print "duplicates are ", [item for item, count in collections.Counter(separated_tx).items() if count > 1]
+    counter,counter_2,counter_3,counter_4  =0,0,0,0
+    message_amp_representation= [int(i) for i in list(bit_representation_message)]
+    tmp_len = max(message_length_on_wire, separated_tx[-1])
+    #print separated_tx
+    print "max len is: " ,tmp_len, separated_tx[-1]
+    for i in range(0,tmp_len):
+        #print "starting ", message_amp_representation[index],index
+        if i in separated_tx:
+            counter +=1
+            #print i,
+            if message_amp_representation[index]==1:
+                tx_instances.append(1)
+                tx_instances.append(1)
+                counter_3 +=2
+                index = index+1
+            elif message_amp_representation[index]==0:
+                tx_instances.append(1)
+                tx_instances.append(0)
+                tx_instances.append(1)
+                counter_4 +=3
+                index = index+1
+            else:
+                print "This is impossible",message_amp_representation[index]
+                sys.exit(1)
         else:
             tx_instances.append(0)
-        
-    import collections
-    print "duplicates are ", [item for item, count in collections.Counter(new_tx).items() if count > 1]
-    import numpy as np
-    a = np.array(tx_instances, dtype=np.float32)
-    a.astype('float32').tofile('abh')
-    print "len of total tx= " , len(new_tx), " must be = msg len on wire= ", message_length_on_wire
+            counter_2 +=1
+
+    import pylab
+    pylab.plot(tx_instances)
+    pylab.show()
+    #a = np.array(tx_instances, dtype=np.float32)
+    #a.astype('float32').tofile('new_transmission.dat')
+    print "index= " ,index
+    print "len of sorted tx indexes= " , len(sorted_tx_indexes)
+    print "len of separated_tx= ", len(separated_tx)
+    print " must be = msg len on wire= ", message_length_on_wire
+    print "tx instances len (final len)= ",len(tx_instances)
+    print "times sep tx was found(2040 spots) : ", counter
+    print "rest of time spots(416100 -counter= ", counter_2
+    print "bit1 added due to #1s ", counter_3
+    print "bit1  added due to #0s ",counter_4
+
