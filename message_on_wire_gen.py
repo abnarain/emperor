@@ -84,8 +84,9 @@ if __name__=='__main__':
             counter_2 +=1
 
     preamble=[]
-    for i in range(0,10):
-        preamble.extend([1,0,0,1,1,1,0,0,0,1])
+    for i in range(0,200):
+        #preamble.extend([1,0,0,1,1,1,0,0,0,1])
+        preamble.extend([1,0,0,1,0,0,1,0,0,1])
     #print preamble
     
     tx_instances=preamble+tx_instances
