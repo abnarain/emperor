@@ -49,10 +49,6 @@ if __name__=='__main__':
         else:
             None
 
-
-
-
-
     print "new seperated index ",len(separated_tx), "early sorted list length ",len(sorted_tx_indexes), "newly generated to insert ", len(to_insert)
     print "duplicates are ", [item for item, count in collections.Counter(separated_tx).items() if count > 1]
     counter,counter_2,counter_3,counter_4  =0,0,0,0
@@ -94,8 +90,10 @@ if __name__=='__main__':
     #import pylab
     #pylab.plot(tx_instances)
     #pylab.show()
-    a = np.array(tx_instances, dtype=np.float32)
-    a.astype('float32').tofile('preamble_new_transmission.dat')
+    a = np.array(tx_indexes, dtype=np.int64)
+    a.astype('int64').tofile('transmission_indexes.dat')
+    b = np.array(tx_instances, dtype=np.float32)
+    b.astype('float32').tofile('preamble_new_transmission.dat')
     print "index= " ,index
     print "len of sorted tx indexes= " , len(sorted_tx_indexes)
     print "len of separated_tx= ", len(separated_tx)
