@@ -4,7 +4,10 @@ import collections
 import numpy as np
 if __name__=='__main__':
     rs= reedsolo.RSCodec(32)
-    message_to_encode = b'I am going to use RS Encoder. There is basically so much to do that I cannot believe. We need to do as much we can how much we can and keep doing it unless we get success in it and that is how the world works. Lets do it...'
+    #message_to_encode_1 = b'I am going to use RS Encoder. There is basically so much to do that I cannot believe. We need to do as much we can how much we can and keep doing it unless we get success in it and that is how the world works. Lets do it...'
+    #message_to_encode_2 = b'I am going to use RS Encoder. There is basically so much to do that I cannot believe. We need to do as much we can how much we can and keep doing it unless we get success in it and that is how the world works. Lets do it...  We need to try out a bigger string to transmit and check how the decoder performs particularly with twice the size of the string that we started in the first try of scewing things up and hope things go well nasty well this time around even with a bigger string.'
+
+    message_to_encode = b'I am going to use RS Encoder. There is basically so much to do that I cannot believe. We need to do as much we can how much we can and keep doing it unless we get success in it and that is how the world works. Lets do it...  We need to try out a bigger string to transmit and check how the decoder performs particularly with twice the size of the string that we started in the first try of scewing things up and hope things go well nasty well this time around even with a bigger string. This is a slightly bigger and mostly well done text because this will test the things of the RS code, the channel and the scheme in terms of the secrecy as the number of slots to spread the information bits will grow polynomially in terms of number of bits of input. This is also a penultimate vector to deal with unless we do things for even more killer long vector as the final one. There are plenty of experiments to be done right now after this basic step goes in of generating test vectors to transmit and receive over the powerline communication channel.'
     encoded_message= rs.encode(message_to_encode)
     print "length of message is ", len(message_to_encode), "length of encoded message is ", len(encoded_message) 
     #encoded_string_bytes_1= rs.encode('hello world motherfucker')
@@ -55,9 +58,9 @@ if __name__=='__main__':
     message_amp_representation= [int(i) for i in list(bit_representation_message)]
     tmp_len = max(message_length_on_wire, separated_tx[-1])
     #print separated_tx
-    print "max len is: " ,tmp_len, separated_tx[-1]
+    print "max len is: " ,tmp_len, "last slot", separated_tx[-1]
     new_indexes=[]
-    j=-1
+    j=0
     for i in range(0,tmp_len):
         #print "starting ", message_amp_representation[index],index
         if i in separated_tx:
@@ -89,7 +92,7 @@ if __name__=='__main__':
     preamble=[]
     for i in range(0,200):
         #preamble.extend([1,0,0,1,1,1,0,0,0,1])
-        preamble.extend([1,0,0,1,0,0,1,0,0,1])
+        preamble.extend([1,0,0,1,0,0,1,0,0,1,0,0])
     #print preamble
     
     tx_instances=preamble+tx_instances
@@ -99,9 +102,11 @@ if __name__=='__main__':
     #pylab.show()
     a = np.array(new_indexes, dtype=np.int64)
     #a.astype('int64/float32').tofile('transmission_indexes.dat')
-    np.save('transmission_indexes_to_compare.dat',a)
+    np.save('transmission_indexes_to_compare_3.dat',a)
     b = np.array(tx_instances, dtype=np.float32)
-    np.save('preamble_new_transmission.dat',b)
+    b.astype('float32').tofile('preamble_new_transmission_3.dat')
+
+    np.save('save_preamble_new_transmission_3.dat',b)
     print "index= " ,index
     print "len of sorted tx indexes= " , len(sorted_tx_indexes)
     print "len of separated_tx= ", len(separated_tx)
