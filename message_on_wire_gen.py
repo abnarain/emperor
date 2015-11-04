@@ -56,20 +56,26 @@ if __name__=='__main__':
     tmp_len = max(message_length_on_wire, separated_tx[-1])
     #print separated_tx
     print "max len is: " ,tmp_len, separated_tx[-1]
+    new_indexes=[]
+    j=-1
     for i in range(0,tmp_len):
         #print "starting ", message_amp_representation[index],index
         if i in separated_tx:
             counter +=1
             #print i,
             if message_amp_representation[index]==1:
+                new_indexes.append([j,11])
                 tx_instances.append(1)
                 tx_instances.append(1)
+                j=j+2
                 counter_3 +=2
                 index = index+1
             elif message_amp_representation[index]==0:
+                new_indexes.append([j,101])
                 tx_instances.append(1)
                 tx_instances.append(0)
                 tx_instances.append(1)
+                j=j+3
                 counter_4 +=3
                 index = index+1
             else:
@@ -78,6 +84,7 @@ if __name__=='__main__':
         else:
             tx_instances.append(0)
             counter_2 +=1
+            j=j+1
 
     preamble=[]
     for i in range(0,200):
@@ -90,10 +97,11 @@ if __name__=='__main__':
     #import pylab
     #pylab.plot(tx_instances)
     #pylab.show()
-    a = np.array(tx_indexes, dtype=np.int64)
-    a.astype('int64').tofile('transmission_indexes.dat')
+    a = np.array(new_indexes, dtype=np.int64)
+    #a.astype('int64/float32').tofile('transmission_indexes.dat')
+    np.save('transmission_indexes_to_compare.dat',a)
     b = np.array(tx_instances, dtype=np.float32)
-    b.astype('float32').tofile('preamble_new_transmission.dat')
+    np.save('preamble_new_transmission.dat',b)
     print "index= " ,index
     print "len of sorted tx indexes= " , len(sorted_tx_indexes)
     print "len of separated_tx= ", len(separated_tx)
