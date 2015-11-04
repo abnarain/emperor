@@ -32,12 +32,6 @@ def plotter(x,y, outfile_name,title,xlabel,ylabel):
         canvas.print_figure(outfile_name, dpi = 110)
 
 
-def just_plot(f):
-    pyplot.plot(f,'o-')
-    pyplot.ylim(-1,3)
-    pyplot.legend()
-    pyplot.show()
-
 def main(argv):
     inputfile=''
     ftype=''
@@ -65,7 +59,7 @@ def main(argv):
 
     f = scipy.fromfile(open(inputfile), dtype=scipy.float32)
     false_positives, false_negatives=0,0
-    negative =1;
+    negative =0
     if negative ==1:
         for i in range(0,len(f)):
             if f[i] == 0.0 :
@@ -74,8 +68,10 @@ def main(argv):
         for i in range(0,len(f)):
             if f[i] == 1.0 :
                 false_positives += 1
-    print "false negatives ",false_negatives, len(f), false_negatives*1.0/len(f)
-    print "false positives ",false_positives, len(f), false_positives*1.0/len(f)
+    if negative ==1:            
+        print "\nfalse negatives ",false_negatives, len(f), false_negatives*1.0/len(f)
+    elif negative ==0:
+        print "false positives ",false_positives, len(f), false_positives*1.0/len(f)
     #plotter(measured_data,[], "measured_data.pdf","plotting the data","index","y value")
 
 if __name__=='__main__':
