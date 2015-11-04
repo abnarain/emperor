@@ -10,10 +10,16 @@ import numpy as np
 # You can compare the mean == That is the expectation of the value (E[nn*])
 # You can compare the expectaton using the values in the curve estimated 
 
-def error_calculation(length, param1,param2,param3, param4):
+def error_calculation(length, param_s1,param_s2,param_n1, param_n2, flag):
     i=np.arange(length)
-    pdf_fitted1 = rayleigh.pdf(i,loc=param1,scale=param2) # fitted distribution
-    pdf_fitted2 = rayleigh.pdf(i,loc=param3,scale=param4) # fitted distribution\
+    plot_fitted1=[],plot_fitted2=[]
+    if flag==1:
+        pdf_fitted1 = rayleigh.pdf(i,loc=param_s1,scale=param_s2) # fitted distribution
+        pdf_fitted2 = rayleigh.pdf(i,loc=param_n1,scale=param_n2) # fitted distribution\
+    elif flag==0:
+        pdf_fitted1 = expon.pdf(i,loc=param_s1,scale=param_s2) # fitted distribution
+        pdf_fitted2 = expon.pdf(i,loc=param_n1,scale=param_n2) # fitted distribution\
+
 
     square_err=0
     l1_norm=0
@@ -119,7 +125,7 @@ def main(argv):
     ps = expected_value(mag)
     print "Signal: expected value acc to time series (E(yy*))  ", ps
     
-    print "entropy of signal is ", kl_distance(mag)
+    print "entropy of signal is= ", kl_distance(mag)
 
     if noiseflag==1:
         noise= scipy.fromfile(open(noisefile), dtype=scipy.complex64)
@@ -140,9 +146,9 @@ def main(argv):
         print "entropy of Noise is= ", kl_distance(mag_noise)
         min_length = min(len(mag_noise), len(mag))
         print " modelled as exponential distribution " 
-        error_calculation(min_length, ps_exponential[0], ps_exponential[1], pn_exponential[0], pn_exponential[1])
+        error_calculation(min_length, ps_exponential[0], ps_exponential[1], pn_exponential[0], pn_exponential[1],0)
         print "\n \n modelled as rayleigh distribution " 
-        error_calculation(min_length, ps_rayleigh[0], ps_rayleigh[1], pn_rayleigh[0], pn_rayleigh[1])
+        error_calculation(min_length, ps_rayleigh[0], ps_rayleigh[1], pn_rayleigh[0], pn_rayleigh[1],1)
 
 
 
