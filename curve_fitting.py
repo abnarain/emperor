@@ -68,20 +68,20 @@ def kl_distance(pk,qk=None):
 
 
 
-def plot_hist(data,filename):
+def plot_hist(data,filename,flag,data2=None):
     fig2 = Figure(linewidth=0.0)
     fig2.set_size_inches(fig_width,fig_length, forward=True)
     Figure.subplots_adjust(fig2, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
     _subplot2 = fig2.add_subplot(1,1,1)
+    _subplot2.hist(data, bins=1200, normed=True,alpha=0.3)
+    if not (data2 ==None):
+        _subplot2.hist(data2, bins=1200, normed=True,alpha=0.5)
+    if flag==1:
+        _subplot2.set_xscale('log')
+        filename+'_log'
 
-    _subplot2.hist(data,  normed=True,alpha=0.3)
-    _subplot2.set_xscale('log')
-    canvas = FigureCanvasAgg(fig1)
-    canvas.print_figure('rayleigh_log_histogram.pdf', dpi = 110)
-    return param
-
-
-
+    canvas = FigureCanvasAgg(fig2)
+    canvas.print_figure(filename+'.pdf', dpi = 110)
 
 def curve_fitting_exp(x,a,b,c):
     def func(x, a, b, c):
@@ -94,7 +94,7 @@ def curve_fitting_exp(x,a,b,c):
     popt, pcov = curve_fit(func, x, yn)
     return popt
 
-def calc_exp(data,outfile_name):
+def calculate_exponential(data,outfile_name):
     fig = Figure(linewidth=0.0)
     fig.set_size_inches(fig_width,fig_length, forward=True)
     Figure.subplots_adjust(fig, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
@@ -110,20 +110,11 @@ def calc_exp(data,outfile_name):
     param = expon.fit(data) # distribution fitting - location, scale - mean and MLE estimator 
     print "parameters are " ,param
     pdf_fitted = expon.pdf(events,loc=param[0],scale=param[1]) # fitted distribution
-    print "pdf fitted ", pdf_fitted
+    print "Exponential: pdf fitted ", pdf_fitted
     _subplot1.plot(pdf_fitted)
     canvas = FigureCanvasAgg(fig1)
-    canvas.print_figure('_pdf_fitted.pdf', dpi = 110)
+    canvas.print_figure(exp_+'_pdf_fitted.pdf', dpi = 110)
 
-    fig2 = Figure(linewidth=0.0)
-    fig2.set_size_inches(fig_width,fig_length, forward=True)
-    Figure.subplots_adjust(fig2, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
-    _subplot2 = fig2.add_subplot(1,1,1)
-
-    _subplot2.hist(data,  normed=True,alpha=0.3)
-    _subplot2.set_xscale('log')
-    canvas = FigureCanvasAgg(fig1)
-    canvas.print_figure('log_histogram.pdf', dpi = 110)
     return param
 
 def calculate_rayleigh(data,outfile_name):
@@ -140,12 +131,13 @@ def calculate_rayleigh(data,outfile_name):
     Figure.subplots_adjust(fig1, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
     _subplot1 = fig1.add_subplot(1,1,1)
     param = expon.fit(data) # distribution fitting - location, scale - mean and MLE estimator 
-    print "parameters are " ,param
+    print "Rayleigh: parameters are " ,param
     pdf_fitted = expon.pdf(events,loc=param[0],scale=param[1]) # fitted distribution
     print "pdf fitted ", pdf_fitted
     _subplot1.plot(pdf_fitted)
     canvas = FigureCanvasAgg(fig1)
-    canvas.print_figure('rayleigh_pdf_fitted.pdf', dpi = 110)
+    canvas.print_figure(fog+'_pdf_fitted.pdf', dpi = 110)
+    return param
 
 
 def main(argv):
@@ -179,17 +171,14 @@ def main(argv):
     for i in range(0,len(data)):
         mag.append(np.absolute(data[i]))
 
-    avg_mag=movingaverage(mag ,100)
-    ps_rayleigh= calc_exp(avg_mag,'tryme')
-    sys.exit(1)
-    ps_rayleigh= calculate_rayleigh(mag,'signal_rayleigh')
-    print "Signal: rayleigh distribution parameters: expected= ", ps_rayleigh[0], "var is ", ps_rayleigh[1]
+    #avg_mag=movingaverage(mag ,100)
+    #ps_rayleigh= calculate_rayleigh(mag,'signal_rayleigh')
+    #print "Signal: rayleigh distribution parameters: expected= ", ps_rayleigh[0], "var is ", ps_rayleigh[1]
 
-    ps_exponential= calculate_exponential(mag,'signal_exponential')
-    print "Signal: exponential distribution parameters: expected= ", ps_exponential[0], "var ",ps_exponential[1]
+    #ps_exponential= calculate_exponential(mag,'signal_exponential')
+    #print "Signal: exponential distribution parameters: expected= ", ps_exponential[0], "var ",ps_exponential[1]
     #ps = expected_value(mag)
     #print "Signal: expected value acc to time series (E(yy*))  ", ps
-    
     #print "entropy of signal is= ", kl_distance(mag)
 
     if noiseflag==1:
@@ -198,12 +187,12 @@ def main(argv):
             mag_noise.append(np.absolute(noise[i]))
         
         avg_noise=movingaverage(mag_noise ,100)
-        print "For Noise" 
-        pn_rayleigh= calculate_rayleigh(mag_noise,'noise_rayleigh')
-        print "Noise: rayleigh distribution parameters: expected= ", pn_rayleigh[0], "var is ", pn_rayleigh[1]
+        #print "For Noise" 
+        #pn_rayleigh= calculate_rayleigh(mag_noise,'noise_rayleigh')
+        #print "Noise: rayleigh distribution parameters: expected= ", pn_rayleigh[0], "var is ", pn_rayleigh[1]
 
-        pn_exponential= calculate_exponential(mag_noise,'noise_exponential')
-        print "Noise: exponential distribution parameters: expected= ", pn_exponential[0], "var ",pn_exponential[1]
+        #pn_exponential= calculate_exponential(mag_noise,'noise_exponential')
+        #print "Noise: exponential distribution parameters: expected= ", pn_exponential[0], "var ",pn_exponential[1]
 
         #pn = expected_value(mag_noise)
         #print "Noise: Expected value acc to time series (E(nn*)) ", pn
@@ -211,13 +200,19 @@ def main(argv):
         #print "the kl distance between th enoise and the signal is=  ", kl_distance(mag,mag_noise)
         #print "entropy of Noise is= ", kl_distance(mag_noise)
 
+        #min_length = min(len(mag_noise), len(mag))
+        #print " modelled as exponential distribution " 
+        #error_calculation(min_length, ps_exponential[0], ps_exponential[1], pn_exponential[0], pn_exponential[1],0)
+        #print "\n \n modelled as rayleigh distribution " 
+        #error_calculation(min_length, ps_rayleigh[0], ps_rayleigh[1], pn_rayleigh[0], pn_rayleigh[1],1)
+
+
         min_length = min(len(mag_noise), len(mag))
-        print " modelled as exponential distribution " 
-        error_calculation(min_length, ps_exponential[0], ps_exponential[1], pn_exponential[0], pn_exponential[1],0)
-        print "\n \n modelled as rayleigh distribution " 
-        error_calculation(min_length, ps_rayleigh[0], ps_rayleigh[1], pn_rayleigh[0], pn_rayleigh[1],1)
-
-
+        min_length_avg = min(len(mag_noise), len(mag))
+        plot_hist(mag[:min_length],'combined',1,data2=mag_noise[:min_length])
+        #plot_hist(avg_mag[:min_length_avg],'avg_combined',1,data2=avg_noise[:min_length_avg])
+        plot_hist(mag[:min_length],'combined',0,data2=mag_noise[:min_length])
+        #plot_hist(avg_mag[:min_length_avg],'avg_combined',0,data2=avg_noise[:min_length_avg])
 
 if __name__=='__main__':
     print "in main"
