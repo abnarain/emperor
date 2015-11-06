@@ -7,6 +7,7 @@ import scipy, sys, getopt
 import matplotlib.font_manager
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
+import struct
 
 #this takes the data got from Gnuradio contaning the message and then calculates the errors that occur following the preamble attached to the message #It also gets the actual bitstream to be shoved into RS decoder to get the ascii message transmitted on the first go.
 
@@ -134,7 +135,6 @@ def main(argv):
 
     print len(rs_decoder_input)*1.0/8 , " this must be a number"
     rs_feed=''.join(rs_decoder_input)
-    import struct
     bin_rep_to_decode = bytearray()
     print "length of rs feed is ",len(rs_feed)
     print "rs feed string is " ,rs_feed
