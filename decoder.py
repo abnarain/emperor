@@ -1,13 +1,12 @@
 import matplotlib
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')
-import reedsolo
 import numpy as np
-import scipy, sys, getopt
+import scipy, sys, getopt,struct,reedsolo
+import matplotlib.pyplot as plt
 import matplotlib.font_manager
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
-import struct
 
 #this takes the data got from Gnuradio contaning the message and then calculates the errors that occur following the preamble attached to the message #It also gets the actual bitstream to be shoved into RS decoder to get the ascii message transmitted on the first go.
 
@@ -52,6 +51,57 @@ def error_rate_calculations(to_decode_data, original_message):
     print "false negatives ", false_negatives
     print "false positives ", false_positives
 
+preamble = [1,0,0,1,0,0,1,0,0,1,0,0]*200
+def start_index(to_decode_file):
+    cor1 =  np.correlate(to_decode_file,preamble,"full")
+    cor2 =  np.correlate(preamble,preamble,"full")
+    collected_array=[]
+    maximum=0
+    for i in range(0,len(cor1)):
+        if cor1[i] > maximum :
+            maximum=int(cor1[i])
+
+    for i in range(0,len(cor1)):
+        if  cor1[i]==maximum:            
+            collected_array.append(i)
+    m= min(collected_array)
+    get_index=0
+    for i in range(0,len(cor2)):
+        if m>cor2[i]:
+            get_index=i
+            print "max correlation index ",get_index
+            break
+    print "value of the mean index is ", m, "max correlation is", maximum
+    return [get_index,m]
+
+def decoding_byte_array(oracle_indices,to_decode_data):
+    ppm= oracle_indices
+    rs_decoder_input=[]
+    for i in range(0,len(ppm)):
+        tup=ppm[i]
+        idx=tup[0].astype(np.int64) 
+        d=to_decode_data[idx]
+        if tup[1]==101:
+            if to_decode_data[idx ]==1 and to_decode_data[idx+1]==0 and to_decode_data[idx+2]==1:
+               rs_decoder_input.append('0')
+               print "adding 101"
+        if tup[1]==11 :
+            if to_decode_data[idx ]==1 and to_decode_data[idx+1] ==1:
+                rs_decoder_input.append('1')
+                print "adding 11 "
+
+    print len(rs_decoder_input)*1.0/8 , " this must be a number"
+    rs_feed=''.join(rs_decoder_input)
+    bin_rep_to_decode = bytearray()
+    #print "length of rs feed is ",len(rs_feed)
+    #print "rs feed string is " ,rs_feed
+    for i in range(0,len(rs_feed),8):
+        x= rs_feed[i:i+8]
+        sx=struct.pack('B',int(x,2))
+        bin_rep_to_decode.extend(sx)
+
+    return bin_rep_to_decode
+
 def main(argv):
     inputfile=''
     ftype=''
@@ -79,72 +129,20 @@ def main(argv):
     to_decode_file = scipy.fromfile(open(inputfile), dtype=scipy.float32)
     original_string = scipy.fromfile(open(original_file), dtype=scipy.float32)
     oracle_indices = np.load(indices_file)
-    #to_decode_file=original_string
+    to_decode_file=original_string
     print "\n lengths for measured data:" , len(to_decode_file), "length of orig transmission: ",len(original_string)
-    preamble = [1,0,0,1,0,0,1,0,0,1,0,0]*200
-    # Take bits as a 3 
-    cor1 =  np.correlate(to_decode_file,preamble,"full")
-    cor2 =  np.correlate(preamble,preamble,"full")
-    collected_array=[]
-    maximum=0
-    for i in range(0,len(cor1)):
-        if cor1[i] > maximum :
-            maximum=int(cor1[i])
-
-    for i in range(0,len(cor1)):
-        if  cor1[i]==maximum:            
-            collected_array.append(i)
-    m= min(collected_array)
-    get_index=0
-    for i in range(0,len(cor2)):
-        if m>cor2[i]:
-            get_index=i
-            print "max correlation index ",get_index
-            break
-    print "value of the mean index is ", m, "max correlation is", maximum
+    [get_index,m ]=start_index(to_decode_file)
     index = m -(len(preamble)-get_index)+1
     start_data_index = index+(len(preamble)-get_index)
-    print start_data_index
-    import matplotlib.pyplot as plt
-    print to_decode_file[index:start_data_index]
-    plt.plot(to_decode_file[index:start_data_index+get_index])
-    plt.savefig('first.pdf')
-    print "index = ",index, "start data index = ", start_data_index
     original_message =original_string[len(preamble):]
     to_decode_data= original_string
     to_decode_data1= to_decode_file[start_data_index: start_data_index+len(original_message) ]
     to_decode_data= to_decode_data1.astype(np.int64)
+    plt.plot(to_decode_file[index:start_data_index+get_index])
+    plt.savefig('first.pdf')
     plt.plot(to_decode_data)
     plt.savefig('second.pdf')
-
-    #read the indices and then compare the 
-    ppm= oracle_indices
-    rs_decoder_input=[]
-    for i in range(0,len(ppm)):
-        tup=ppm[i]
-        idx=tup[0].astype(np.int64) 
-        d=to_decode_data[idx]
-        if tup[1]==101:
-            if to_decode_data[idx ]==1 and to_decode_data[idx+1]==0 and to_decode_data[idx+2]==1:
-               rs_decoder_input.append('0')
-               print "adding 101"
-        if tup[1]==11 :
-            if to_decode_data[idx ]==1 and to_decode_data[idx+1] ==1:
-                rs_decoder_input.append('1')
-                print "adding 11 "
-
-    print len(rs_decoder_input)*1.0/8 , " this must be a number"
-    rs_feed=''.join(rs_decoder_input)
-    bin_rep_to_decode = bytearray()
-    print "length of rs feed is ",len(rs_feed)
-    print "rs feed string is " ,rs_feed
-    for i in range(0,len(rs_feed),8):
-        m= rs_feed[i:i+8]
-        x= m #m.lstrip('0')
-        print "the byte is  the string is ",m
-        sx=struct.pack('B',int(x,2))
-        bin_rep_to_decode.extend(sx)
-
+    bin_rep_to_decode=decoding_byte_array(oracle_indices,to_decode_data)
     print "Going to decode"
     rs= reedsolo.RSCodec(32)
     message_decoded = rs.decode(bin_rep_to_decode)
