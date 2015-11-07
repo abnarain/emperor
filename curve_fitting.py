@@ -160,20 +160,21 @@ def main(argv):
 
     mag, mag_noise, avg_mag, avg_noise=[],[], [], []
     data= scipy.fromfile(open(inputfile), dtype=scipy.complex64)
+    l=inputfile.split('_')
+    fname= '_'.join([l[-2],'_',l[-1][:-4]])
     for i in range(0,len(data)):
         mag.append(np.absolute(data[i]))
-
     avg_mag=movingaverage(mag ,10)
-    ps_rayleigh= calculate_rayleigh(mag,'signal_rayleigh')
-    avg_ps_rayleigh= calculate_rayleigh(avg_mag,'avg_signal_rayleigh')
+    ps_rayleigh= calculate_rayleigh(mag,'signal_rayleigh'+fname)
+    avg_ps_rayleigh= calculate_rayleigh(avg_mag,'avg_signal_rayleigh'+fname)
 
     mag= mag
     avg_mag=avg_mag
     print "Signal: rayleigh distribution parameters: expected= ", ps_rayleigh[0], "scale is ", ps_rayleigh[1]
     print "Avg Signal: rayleigh distribution parameters: expected= ", ps_rayleigh[0], "scale is ", ps_rayleigh[1]
 
-    ps_exponential= calculate_exponential(mag,'signal_exponential')
-    avg_ps_exponential= calculate_exponential(avg_mag,'avg_signal_exponential')
+    ps_exponential= calculate_exponential(mag,'signal_exponential'+fname)
+    avg_ps_exponential= calculate_exponential(avg_mag,'avg_signal_exponential'+fname)
     print "Signal: exponential distribution parameters: expected= ", ps_exponential[0], "scale is ",ps_exponential[1]
     print "Avg Signal: exponential distribution parameters: expected= ",avg_ps_exponential[0], "scale is ",avg_ps_exponential[1]
 
@@ -197,15 +198,15 @@ def main(argv):
         mag_noise =mag_noise
         avg_noise =avg_noise
         print "For Noise" 
-        pn_rayleigh= calculate_rayleigh(mag_noise,'noise_rayleigh')
+        pn_rayleigh= calculate_rayleigh(mag_noise,'noise_rayleigh'+fname)
         print "Noise: rayleigh distribution parameters: expected= ", pn_rayleigh[0], "var is ", pn_rayleigh[1]
-        avg_pn_rayleigh= calculate_rayleigh(avg_noise,'avg_noise_rayleigh')
+        avg_pn_rayleigh= calculate_rayleigh(avg_noise,'avg_noise_rayleigh'+fname)
         print "Avg Noise: rayleigh distribution parameters: expected= ", avg_pn_rayleigh[0], "var is ", avg_pn_rayleigh[1]
 
-        pn_exponential= calculate_exponential(mag_noise,'noise_exponential')
+        pn_exponential= calculate_exponential(mag_noise,'noise_exponential'+fname)
         print "Noise: exponential distribution parameters: expected= ", pn_exponential[0], "var ",pn_exponential[1]
 
-        avg_pn_exponential= calculate_exponential(avg_noise,'noise_exponential')
+        avg_pn_exponential= calculate_exponential(avg_noise,'noise_exponential'+fname)
         print "Avg Noise: exponential distribution parameters: expected= ", avg_pn_exponential[0], "var ",avg_pn_exponential[1]
 
         pn = expected_value(mag_noise)
@@ -238,10 +239,10 @@ def main(argv):
         #min_length = min(len(mag_noise), len(mag))
         #min_length_avg = min(len(avg_noise), len(avg_mag))
         #print min_length_avg, len(avg_noise), len(avg_mag) ,len(mag)
-        #plot_hist(mag[:min_length],'combined',1,data2=mag_noise[:min_length])
-        #plot_hist(avg_mag[:min_length_avg],'avg_combined',1,data2=avg_noise[:min_length_avg])
-        #plot_hist(mag[:min_length],'combined',0,data2=mag_noise[:min_length])
-        #plot_hist(avg_mag[:min_length_avg],'avg_combined',0,data2=avg_noise[:min_length_avg])
+        #plot_hist(mag[:min_length],'combined'+fname,1,data2=mag_noise[:min_length])
+        #plot_hist(avg_mag[:min_length_avg],'avg_combined'+fname,1,data2=avg_noise[:min_length_avg])
+        #plot_hist(mag[:min_length],'combined'+fname,0,data2=mag_noise[:min_length])
+        #plot_hist(avg_mag[:min_length_avg],'avg_combined'+fname,0,data2=avg_noise[:min_length_avg])
 
 if __name__=='__main__':
     print "in main"
