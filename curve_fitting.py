@@ -42,16 +42,14 @@ def error_calculation(length, param_s1,param_s2,param_n1, param_n2, flag):
     elif flag==0:
         pdf_fitted1 = expon.pdf(i,loc=param_s1,scale=param_s2) # fitted distribution - exponential
         pdf_fitted2 = expon.pdf(i,loc=param_n1,scale=param_n2) # fitted distribution - exponential
-    square_err=0
     l1_norm=0
-    for i in range(0, length):
-        square_err += (pdf_fitted1[i] - pdf_fitted2)**2
-        l1_norm += abs(pdf_fitted1[i] - pdf_fitted2)
+    mean_square_err =mean_square_error(pdf_fitted1, pdf_fitted2)
+    l1_norm = sum(abs(pdf_fitted1[i] - pdf_fitted2))
 
-    mse= square_err*1.0/ length
-    mean_l1_norm = 1.0*l1_norm/length  
-    print "L1 Norm", l1_norm, " square error =", square_err
-    print  "ML1Norm ", mean_l1_norm, "MSE", mse
+    root_mean_square_err = sqrt(mean_square_err)
+    mean_l1_norm = 1.0*l1_norm/length
+    print "Square error= ", square_err , "Root Mean Square Error= ", root_mean_square_err
+    print  "L1 norm= ",  l1_norm , "MSE= ", mean_l1_norm 
 
 def expected_value(data):
     return sum(data)*1.0/len(data)
