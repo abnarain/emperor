@@ -163,12 +163,12 @@ def main(argv):
     for i in range(0,len(data)):
         mag.append(np.absolute(data[i]))
 
-    avg_mag=movingaverage(mag ,100)
+    avg_mag=movingaverage(mag ,10)
     ps_rayleigh= calculate_rayleigh(mag,'signal_rayleigh')
     avg_ps_rayleigh= calculate_rayleigh(avg_mag,'avg_signal_rayleigh')
 
-    mag= mag[:100]
-    avg_mag=avg_mag[:100]
+    mag= mag
+    avg_mag=avg_mag
     print "Signal: rayleigh distribution parameters: expected= ", ps_rayleigh[0], "scale is ", ps_rayleigh[1]
     print "Avg Signal: rayleigh distribution parameters: expected= ", ps_rayleigh[0], "scale is ", ps_rayleigh[1]
 
@@ -194,8 +194,8 @@ def main(argv):
         for i in range(0,len(noise)):
             mag_noise.append(np.absolute(noise[i]))
         avg_noise=movingaverage(mag_noise ,10)
-        mag_noise =mag_noise[:100]
-        avg_noise =avg_noise[:100]
+        mag_noise =mag_noise
+        avg_noise =avg_noise
         print "For Noise" 
         pn_rayleigh= calculate_rayleigh(mag_noise,'noise_rayleigh')
         print "Noise: rayleigh distribution parameters: expected= ", pn_rayleigh[0], "var is ", pn_rayleigh[1]
