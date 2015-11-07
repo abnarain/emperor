@@ -2,14 +2,16 @@ import matplotlib
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')
 from scipy.stats import norm,rayleigh, expon, entropy
-import sys, scipy, getopt, pylab
-import numpy as np
-
+import sys, scipy, getopt
 import matplotlib.font_manager
 import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
+from matplotlib import pyplot
+from sklearn.metrics import mean_squared_error
+from math import sqrt,log
+#rms = sqrt(mean_squared_error(y_actual, y_predicted))
 
 fig_width = 10
 fig_length = 10.25
@@ -35,13 +37,11 @@ errfunc  = lambda p, x, y: (y - fitfunc(p, x))
 def error_calculation(length, param_s1,param_s2,param_n1, param_n2, flag):
     i=np.arange(length)
     if flag==1:
-        pdf_fitted1 = rayleigh.pdf(i,loc=param_s1,scale=param_s2) # fitted distribution
-        pdf_fitted2 = rayleigh.pdf(i,loc=param_n1,scale=param_n2) # fitted distribution\
+        pdf_fitted1 = rayleigh.pdf(i,loc=param_s1,scale=param_s2) # fitted distribution - rayleigh
+        pdf_fitted2 = rayleigh.pdf(i,loc=param_n1,scale=param_n2) # fitted distribution - rayleigh
     elif flag==0:
-        pdf_fitted1 = expon.pdf(i,loc=param_s1,scale=param_s2) # fitted distribution
-        pdf_fitted2 = expon.pdf(i,loc=param_n1,scale=param_n2) # fitted distribution\
-
-
+        pdf_fitted1 = expon.pdf(i,loc=param_s1,scale=param_s2) # fitted distribution - exponential
+        pdf_fitted2 = expon.pdf(i,loc=param_n1,scale=param_n2) # fitted distribution - exponential
     square_err=0
     l1_norm=0
     for i in range(0, length):
@@ -53,9 +53,6 @@ def error_calculation(length, param_s1,param_s2,param_n1, param_n2, flag):
     print "L1 Norm", l1_norm, " square error =", square_err
     print  "ML1Norm ", mean_l1_norm, "MSE", mse
 
-
-
-
 def expected_value(data):
     return sum(data)*1.0/len(data)
 
@@ -66,19 +63,17 @@ def kl_distance(pk,qk=None):
     else:    
         return entropy(pk, qk)
 
-
-
 def plot_hist(data,filename,flag,data2=None):
     fig2 = Figure(linewidth=0.0)
     fig2.set_size_inches(fig_width,fig_length, forward=True)
     Figure.subplots_adjust(fig2, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
     _subplot2 = fig2.add_subplot(1,1,1)
-    _subplot2.hist(data, bins=1200, normed=True,alpha=0.3)
+    n,bins,patches= _subplot2.hist(data,bins=2000,normed=True,color='g')
     if not (data2 ==None):
-        _subplot2.hist(data2, bins=1200, normed=True,alpha=0.5)
+        n2, bins2, patches2 = _subplot2.hist(data2,bins=2000,normed=True,color='r')
     if flag==1:
         _subplot2.set_xscale('log')
-        filename+'_log'
+        filename= filename+'_log'
 
     canvas = FigureCanvasAgg(fig2)
     canvas.print_figure(filename+'.pdf', dpi = 110)
@@ -95,48 +90,47 @@ def curve_fitting_exp(x,a,b,c):
     return popt
 
 def calculate_exponential(data,outfile_name):
-    fig = Figure(linewidth=0.0)
-    fig.set_size_inches(fig_width,fig_length, forward=True)
-    Figure.subplots_adjust(fig, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
-    _subplot = fig.add_subplot(1,1,1) #, bins, patches = pyplot.hist(mag, 1250, facecolor='green')
-    bins, events, patches=  _subplot.hist(data,bins=1200,normed=1) 
-    canvas = FigureCanvasAgg(fig)
-    canvas.print_figure(outfile_name+'_hist.pdf', dpi = 110)
+    n,bins =  np.histogram(data, density=True)  # #_subplot.hist(data,bins=1200,density=1) 
 
     fig1 = Figure(linewidth=0.0)
     fig1.set_size_inches(fig_width,fig_length, forward=True)
     Figure.subplots_adjust(fig1, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
     _subplot1 = fig1.add_subplot(1,1,1)
-    param = expon.fit(data) # distribution fitting - location, scale - mean and MLE estimator 
-    print "parameters are " ,param
-    pdf_fitted = expon.pdf(events,loc=param[0],scale=param[1]) # fitted distribution
-    print "Exponential: pdf fitted ", pdf_fitted
+    try:
+        param = expon.fit(data) # distribution fitting - location, scale - mean and MLE estimator 
+    except:
+        print " exponential fit not working "
+    try:
+        pdf_fitted = expon.pdf(bins,loc=param[0],scale=param[1]) # fitted distribution
+    except:
+        print " the exp pdf dint work, returning ..."
+        return [0,0]
     _subplot1.plot(pdf_fitted)
     canvas = FigureCanvasAgg(fig1)
-    canvas.print_figure(exp_+'_pdf_fitted.pdf', dpi = 110)
+    canvas.print_figure(outfile_name+'_pdf_fitted.pdf', dpi = 110)
 
     return param
 
 def calculate_rayleigh(data,outfile_name):
-    fig = Figure(linewidth=0.0)
-    fig.set_size_inches(fig_width,fig_length, forward=True)
-    Figure.subplots_adjust(fig, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
-    _subplot = fig.add_subplot(1,1,1) #, bins, patches = pyplot.hist(mag, 1250, facecolor='green')
-    bins, events, patches=  _subplot.hist(data,bins=1200,normed=1) 
-    canvas = FigureCanvasAgg(fig)
-    canvas.print_figure(outfile_name+'_hist.pdf', dpi = 110)
+    n, bins=  np.histogram(data,density=1) 
 
     fig1 = Figure(linewidth=0.0)
     fig1.set_size_inches(fig_width,fig_length, forward=True)
     Figure.subplots_adjust(fig1, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
     _subplot1 = fig1.add_subplot(1,1,1)
-    param = expon.fit(data) # distribution fitting - location, scale - mean and MLE estimator 
-    print "Rayleigh: parameters are " ,param
-    pdf_fitted = expon.pdf(events,loc=param[0],scale=param[1]) # fitted distribution
-    print "pdf fitted ", pdf_fitted
+    try : 
+        param = rayleigh.fit(data) # distribution fitting - location, scale - mean and MLE estimator 
+    except:
+        print "screwed raleigh fit "
+    try:
+        pdf_fitted = rayleigh.pdf(bins,loc=param[0],scale=param[1]) # fitted distribution
+    except :
+        print " returning as nothing to plot "
+        return [0,0]
+
     _subplot1.plot(pdf_fitted)
     canvas = FigureCanvasAgg(fig1)
-    canvas.print_figure(fog+'_pdf_fitted.pdf', dpi = 110)
+    canvas.print_figure(outfile_name+'_pdf_fitted.pdf', dpi = 110)
     return param
 
 
@@ -148,12 +142,12 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv,"h:i:f:n:",["ifile=","ftype=","ntype="])
     except getopt.GetoptError:
-        print 'file.py -i <inputfile> -f <caption on graph>'
+        print 'file.py -i <inputfile> -f <caption on graph> -n <noisefile>'
         sys.exit(2)
     for opt, arg in opts:
         print opt ,arg,
         if opt == '-h':
-            print 'file.py -i <inputfile> -f <caption on graph> '
+            print 'file.py -i <inputfile> -f <caption on graph>  -n <noisefile>'
             sys.exit()
         elif opt in ("-i", "--ifile"):
             inputfile = arg
@@ -171,34 +165,70 @@ def main(argv):
     for i in range(0,len(data)):
         mag.append(np.absolute(data[i]))
 
-    #avg_mag=movingaverage(mag ,100)
-    #ps_rayleigh= calculate_rayleigh(mag,'signal_rayleigh')
-    #print "Signal: rayleigh distribution parameters: expected= ", ps_rayleigh[0], "var is ", ps_rayleigh[1]
+    avg_mag=movingaverage(mag ,100)
+    ps_rayleigh= calculate_rayleigh(mag,'signal_rayleigh')
+    avg_ps_rayleigh= calculate_rayleigh(avg_mag,'avg_signal_rayleigh')
 
-    #ps_exponential= calculate_exponential(mag,'signal_exponential')
-    #print "Signal: exponential distribution parameters: expected= ", ps_exponential[0], "var ",ps_exponential[1]
-    #ps = expected_value(mag)
-    #print "Signal: expected value acc to time series (E(yy*))  ", ps
-    #print "entropy of signal is= ", kl_distance(mag)
+    mag= mag[:100]
+    avg_mag=avg_mag[:100]
+    print "Signal: rayleigh distribution parameters: expected= ", ps_rayleigh[0], "scale is ", ps_rayleigh[1]
+    print "Avg Signal: rayleigh distribution parameters: expected= ", ps_rayleigh[0], "scale is ", ps_rayleigh[1]
+
+    ps_exponential= calculate_exponential(mag,'signal_exponential')
+    avg_ps_exponential= calculate_exponential(avg_mag,'avg_signal_exponential')
+    print "Signal: exponential distribution parameters: expected= ", ps_exponential[0], "scale is ",ps_exponential[1]
+    print "Avg Signal: exponential distribution parameters: expected= ",avg_ps_exponential[0], "scale is ",avg_ps_exponential[1]
+
+    ps = expected_value(mag)
+    avg_ps = expected_value(avg_mag)
+
+    print "Signal: expected value acc to time series (E(yy*))  ", ps, "dB" ,10*log(ps,10)
+    print "Avg Signal: expected value acc to time series (E(yy*))  ", avg_ps, "dB" ,10*log(avg_ps,10)
+
+    try:
+        print "entropy of signal is= ", kl_distance(mag)
+    except:
+        print "dint get signal entropy "
+
 
     if noiseflag==1:
         noise= scipy.fromfile(open(noisefile), dtype=scipy.complex64)
         for i in range(0,len(noise)):
             mag_noise.append(np.absolute(noise[i]))
-        
-        avg_noise=movingaverage(mag_noise ,100)
-        #print "For Noise" 
-        #pn_rayleigh= calculate_rayleigh(mag_noise,'noise_rayleigh')
-        #print "Noise: rayleigh distribution parameters: expected= ", pn_rayleigh[0], "var is ", pn_rayleigh[1]
+        avg_noise=movingaverage(mag_noise ,10)
+        mag_noise =mag_noise[:100]
+        avg_noise =avg_noise[:100]
+        print "For Noise" 
+        pn_rayleigh= calculate_rayleigh(mag_noise,'noise_rayleigh')
+        print "Noise: rayleigh distribution parameters: expected= ", pn_rayleigh[0], "var is ", pn_rayleigh[1]
+        avg_pn_rayleigh= calculate_rayleigh(avg_noise,'avg_noise_rayleigh')
+        print "Avg Noise: rayleigh distribution parameters: expected= ", avg_pn_rayleigh[0], "var is ", avg_pn_rayleigh[1]
 
-        #pn_exponential= calculate_exponential(mag_noise,'noise_exponential')
-        #print "Noise: exponential distribution parameters: expected= ", pn_exponential[0], "var ",pn_exponential[1]
+        pn_exponential= calculate_exponential(mag_noise,'noise_exponential')
+        print "Noise: exponential distribution parameters: expected= ", pn_exponential[0], "var ",pn_exponential[1]
 
-        #pn = expected_value(mag_noise)
-        #print "Noise: Expected value acc to time series (E(nn*)) ", pn
+        avg_pn_exponential= calculate_exponential(avg_noise,'noise_exponential')
+        print "Avg Noise: exponential distribution parameters: expected= ", avg_pn_exponential[0], "var ",avg_pn_exponential[1]
+
+        pn = expected_value(mag_noise)
+        print "Noise: Expected value acc to time series (E(nn*)) ", pn , "dB ", 10*log(pn,10)
+        avg_pn = expected_value(avg_noise)                                       
+        print "Avg Noise: Expected value acc to time series (E(nn*)) ", avg_pn, "dB ", 10*log(avg_pn,10)
+
+        try:
+            print "the kl distance between th enoise and the signal is=  ", kl_distance(mag,mag_noise)
+        except:
+            print "dint get noise signal kl divergence wrt noise"
         
-        #print "the kl distance between th enoise and the signal is=  ", kl_distance(mag,mag_noise)
-        #print "entropy of Noise is= ", kl_distance(mag_noise)
+        try:
+            print "the kl distance between th enoise and the signal is=  ", kl_distance(avg_mag,avg_noise)
+        except:
+            print " dint get the avg signal kl divergence wrt avg noise "
+            
+        try:
+            print "entropy of Noise is= ", kl_distance(mag_noise)
+        except:
+            print " dint get noise entropy " 
 
         #min_length = min(len(mag_noise), len(mag))
         #print " modelled as exponential distribution " 
@@ -207,11 +237,12 @@ def main(argv):
         #error_calculation(min_length, ps_rayleigh[0], ps_rayleigh[1], pn_rayleigh[0], pn_rayleigh[1],1)
 
 
-        min_length = min(len(mag_noise), len(mag))
-        min_length_avg = min(len(mag_noise), len(mag))
-        plot_hist(mag[:min_length],'combined',1,data2=mag_noise[:min_length])
+        #min_length = min(len(mag_noise), len(mag))
+        #min_length_avg = min(len(avg_noise), len(avg_mag))
+        #print min_length_avg, len(avg_noise), len(avg_mag) ,len(mag)
+        #plot_hist(mag[:min_length],'combined',1,data2=mag_noise[:min_length])
         #plot_hist(avg_mag[:min_length_avg],'avg_combined',1,data2=avg_noise[:min_length_avg])
-        plot_hist(mag[:min_length],'combined',0,data2=mag_noise[:min_length])
+        #plot_hist(mag[:min_length],'combined',0,data2=mag_noise[:min_length])
         #plot_hist(avg_mag[:min_length_avg],'avg_combined',0,data2=avg_noise[:min_length_avg])
 
 if __name__=='__main__':
