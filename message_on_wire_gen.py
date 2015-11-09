@@ -57,7 +57,7 @@ def ppm_modulation(message_length_on_wire,message_amp_representation, separated_
     for i in range(0,200):
         preamble.extend([1,0,0,1,0,0,1,0,0,1,0,0])
     '''
-    preamble= [1,0,1,0,1,1,0,0,1,1,0,1,1,1,0,1,1,0,1,0,0,1,0,0,1,1,1,0,0,0,1,0,1,1,1,1,0,0,1,0,1,0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,1,0,0]
+    preamble= [1,0,1,0,1,1,0,0,1,1,0,1,1,1,0,1,1,0,1,0,0,1,0,0,1,1,1,0,0,0,1,0,1,1,1,1,0,0,1,0,1,0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,1,0,0,1,1,1,1]
         
     tmp_len = max(message_length_on_wire, separated_tx[-1])
     #print separated_tx
