@@ -17,13 +17,9 @@ def return_sample_messages():
 
    #message_to_encode_2 = b'I am going to use RS Encoder. There is basically so much to do that I cannot believe. We need to do as much we can how much we can and keep doing it unless we get success in it and that is how the world works. Lets do it...  We need to try out a bigger string to transmit and check how the decoder performs particularly with twice the size of the string that we started in the first try of scewing things up and hope things go well nasty well this time around even with a bigger string.'
 
-    message_to_encode = b'I am going to use RS Encoder. There is basically so much to do that I cannot believe. We need to do as much we can how much we can and keep doing it unless we get success in it and that is how the world works. Lets do it...  We need to try out a bigger string to transmit and check how the decoder performs particularly with twice the size of the string that we started in the first try of scewing things up and hope things go well nasty well this time around even with a bigger string. This is a slightly bigger and mostly well done text because this will test the things of the RS code, the channel and the scheme in terms of the secrecy as the number of slots to spread the information bits will grow polynomially in terms of number of bits of input. This is also a penultimate vector to deal with unless we do things for even more killer long vector as the final one. There are plenty of experiments to be done right now after this basic step goes in of generating test vectors to transmit and receive over the powerline communication channel.'
-    message_to_encode = b'Abhinav'
+    #message_to_encode = b'I am going to use RS Encoder. There is basically so much to do that I cannot believe. We need to do as much we can how much we can and keep doing it unless we get success in it and that is how the world works. Lets do it...  We need to try out a bigger string to transmit and check how the decoder performs particularly with twice the size of the string that we started in the first try of scewing things up and hope things go well nasty well this time around even with a bigger string. This is a slightly bigger and mostly well done text because this will test the things of the RS code, the channel and the scheme in terms of the secrecy as the number of slots to spread the information bits will grow polynomially in terms of number of bits of input. This is also a penultimate vector to deal with unless we do things for even more killer long vector as the final one. There are plenty of experiments to be done right now after this basic step goes in of generating test vectors to transmit and receive over the powerline communication channel.'
+    message_to_encode = b'Abhinav Narain is a good person'
     return message_to_encode
-
-
-def print_stats(message_length_on_wire):
-    print " must be = msg len on wire= ", message_length_on_wire
 
 
 def generate_postions(bit_representation_message):
@@ -57,8 +53,12 @@ def generate_postions(bit_representation_message):
 
 def ppm_modulation(message_length_on_wire,message_amp_representation, separated_tx):
     preamble=[]
+    '''
     for i in range(0,200):
         preamble.extend([1,0,0,1,0,0,1,0,0,1,0,0])
+    '''
+    preamble= [1,0,1,0,1,1,0,0,1,1,0,1,1,1,0,1,1,0,1,0,0,1,0,0,1,1,1,0,0,0,1,0,1,1,1,1,0,0,1,0,1,0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,1,0,0]
+        
     tmp_len = max(message_length_on_wire, separated_tx[-1])
     #print separated_tx
     counter,counter_2,counter_3,counter_4  =0,0,0,0
@@ -96,7 +96,7 @@ def ppm_modulation(message_length_on_wire,message_amp_representation, separated_
     a = np.array(new_indexes, dtype=np.int64)
     #a.astype('int64/float32').tofile('transmission_indexes.dat')
     np.save('transmission_indexes_to_compare_3.dat',a)
-    tx_instances=preamble+tx_instances
+    tx_instances=preamble+tx_instances + [0]*1000
     b = np.array(tx_instances, dtype=np.float32)
     b.astype('float32').tofile('preamble_new_transmission_3.dat')
     print "index= " ,index
@@ -131,6 +131,6 @@ if __name__=='__main__':
     print "duplicates are ", [item for item, count in collections.Counter(separated_tx).items() if count > 1]
     message_amp_representation= [int(i) for i in list(bit_representation_message)]
     ppm_modulation(message_length_on_wire,message_amp_representation, separated_tx)
-    print_stats(message_length_on_wire)
+    print " must be = msg len on wire= ", message_length_on_wire
 
 
