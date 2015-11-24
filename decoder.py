@@ -68,7 +68,8 @@ def start_index(to_decode_file):
     for i in range(0,len(cor1)):
         if  cor1[i]==maximum:
             min_index_of_max= i
-    print "value of the mean index is ", min_index_of_max
+            break
+    print "value of the mean index is ", min_index_of_max, "len(preamble)-min_index_of_max: ",len(preamble)-  min_index_of_max
     return min_index_of_max
 
 
@@ -79,18 +80,25 @@ def decoding_byte_array(oracle_indices,to_decode_data):
     for i in range(0,len(ppm)):
         tup=ppm[i]
         idx=tup[0].astype(np.int64)
-        print idx, 
         try :
             d=to_decode_data[idx]
         except:
             print "index is", idx , len(ppm), i
             break
-        if (to_decode_data[idx ]==1 and to_decode_data[idx+1]==0 and  to_decode_data[idx+2]==1)  :
+        if (to_decode_data[idx ]==1 and to_decode_data[idx+1]==0 and to_decode_data[idx+2]==1) :
             rs_decoder_input.append('0')
-            continue
-        if (to_decode_data[idx ]==1 and to_decode_data[idx+1] ==1  and to_decode_data[idx+2] ==0) :
-            rs_decoder_input.append('1')
-            continue
+        elif (to_decode_data[idx ]==1 and to_decode_data[idx+1] ==1 ):# and to_decode_data[idx+2] ==0) :
+            rs_decoder_input.append('1') 
+        else:
+            if (to_decode_data[idx ]==0 and to_decode_data[idx+1]==1 and to_decode_data[idx+2]==0) :
+                rs_decoder_input.append('1') 
+            elif (to_decode_data[idx]==1 and to_decode_data[idx+1]==0 and to_decode_data[idx+2]==1 )  :
+                rs_decoder_input.append('0') 
+            else:
+                rs_decoder_input.append('1') 
+
+
+
     print len(rs_decoder_input)*1.0/8 , " this must be a number"
     rs_feed=''.join(rs_decoder_input)
     bin_rep_to_decode = bytearray()
@@ -161,13 +169,97 @@ def decoding_byte_array2(oracle_indices,to_decode_data):
     return bin_rep_to_decode
 
 
-def plot_the_instances(to_decode_file,ppm):
+
+def decoding_majority(oracle_indices,to_decode_data):
+    ppm= oracle_indices
+    rs_decoder_input=[]
+    print "length of total received array is " , len(to_decode_data), "original length of transmissions", len(oracle_indices)
     for i in range(0,len(ppm)):
-        #d=to_decode_file[idx]
         tup=ppm[i]
         idx=tup[0].astype(np.int64)
-        plt.plot(to_decode_file[idx: idx+5], "r*-")  
-    plt.savefig("start_of_data.pdf")
+        try :
+            d=to_decode_data[idx]
+        except:
+            print "index is", idx , len(ppm), i
+            break
+        if ((to_decode_data[idx ]==1 and to_decode_data[idx+1]==1 and to_decode_data[idx+2]==1) or (to_decode_data[idx ]==1 and to_decode_data[idx+1]==0 and to_decode_data[idx+2]==1)or  (to_decode_data[idx ]==1 and to_decode_data[idx+1]==1 and to_decode_data[idx+2]==0) or (to_decode_data[idx ]==0 and to_decode_data[idx+1]==1 and to_decode_data[idx+2]==1)  ) :
+            rs_decoder_input.append('1')
+        elif ((to_decode_data[idx ]==0 and to_decode_data[idx+1] ==0  and to_decode_data[idx+2]==0 ) or (to_decode_data[idx ]==0 and to_decode_data[idx+1]==0 and to_decode_data[idx+2]==1) or (to_decode_data[idx ]==0 and to_decode_data[idx+1]==1 and to_decode_data[idx+2]==0) or (to_decode_data[idx ]==1 and to_decode_data[idx+1]==0 and to_decode_data[idx+2]==0) )  :
+            rs_decoder_input.append('0') 
+        else:
+           print "donno"
+
+
+
+    print len(rs_decoder_input)*1.0/8 , " this must be a number"
+    rs_feed=''.join(rs_decoder_input)
+    bin_rep_to_decode = bytearray()
+    print "length of rs feed is ",len(rs_feed)
+    #print "rs feed string is " ,rs_feed
+    for i in range(0,len(rs_feed),8):
+        x= rs_feed[i:i+8]
+        sx=struct.pack('B',int(x,2))
+        #print "x: ",x ," ",
+        print chr(ord(sx)),
+        bin_rep_to_decode.extend(sx)
+
+    return bin_rep_to_decode
+
+def decoding_byte_array2(oracle_indices,to_decode_data):
+    ppm= oracle_indices
+    rs_decoder_input=[]
+    j=0
+    import pylab
+    pylab.plot(to_decode_data[0:150],'b*-')
+    pylab.ylim(0,2)
+    pylab.savefig("tocheck.pdf")
+    j_last=0
+    tup_last=ppm[0]
+    print "length of oracle indices/bits to transmit ", len(oracle_indices), "len of to_decode_data",len(to_decode_data)
+    print ppm[:10]
+    for i in range(0,len(ppm)):
+        tup=ppm[i]
+        print "(i,j is ",i,j , " tolook= ",tup, ") "
+        if tup[1]==101:
+            while j < len(to_decode_data):
+                if to_decode_data[j] ==1 and to_decode_data[j+1] ==0 and to_decode_data[j+2] ==1 :
+                    rs_decoder_input.append('0')
+                    print "101 and tup AT j=",j, "j_last-j=",j- j_last, "tup diff= ", tup[0]-tup_last[0]
+                    j_last=j
+                    j=j+3
+                    tup_last=tup
+                    break
+                else:
+                    j=j+1
+        if tup[1]==11:
+            while j < len(to_decode_data):
+                if to_decode_data[j] ==1 and to_decode_data[j+1] ==1 :
+                    rs_decoder_input.append('1')
+                    print "11 and tup AT j=",j , "j_last=",j-j_last, "tup diff= ", tup[0]-tup_last[0]
+                    j_last=j
+                    j=j+2
+                    tup_last=tup
+                    break
+                else:
+                    j=j+1
+     #   if i>20:
+     #       sys.exit(1)
+
+    print len(rs_decoder_input)*1.0/8 , " this must be a number"
+    rs_feed=''.join(rs_decoder_input)
+    bin_rep_to_decode = bytearray()
+    print "length of rs feed(string format) is ",len(rs_feed)
+    print "length of list created= ", rs_decoder_input
+    #print "rs feed string is " ,rs_feed
+    for i in range(0,len(rs_feed),8):
+        x= rs_feed[i:i+8]
+        sx=struct.pack('B',int(x,2))
+        #print "x: ",x ," ",
+        print chr(ord(sx)),
+        bin_rep_to_decode.extend(sx)
+    print "\nnow the binary rep list length is= ", len(bin_rep_to_decode)
+    return bin_rep_to_decode
+
 
 
 def main(argv):
@@ -197,21 +289,23 @@ def main(argv):
     to_decode_file = scipy.fromfile(open(inputfile), dtype=scipy.float32)
     original_string = scipy.fromfile(open(original_file), dtype=scipy.float32)
     oracle_indices = np.load(indices_file)
-    to_decode_file=original_string
+    #to_decode_file=original_string
     print "\n lengths for measured data:" , len(to_decode_file), "length of orig transmission: ",len(original_string)
     get_index=start_index(to_decode_file)
-    start_data_index = get_index+1 # get_index+1 #(m-get_index)  #m - (len(preamble) - get_index) +1
+    start_data_index = get_index #(m-get_index)  #m - (len(preamble) - get_index) +1
     print "starting of data is  ", start_data_index
-    plt.plot(to_decode_file[:start_data_index],'*-')
+    got_preamble=to_decode_file[get_index:get_index+len(preamble)]
+    #plt.plot(to_decode_file[get_index:get_index+len(preamble)],'*-')
+    plt.plot(to_decode_file[get_index-68:get_index],'*-')
+    plt.ylim(0,1)
     plt.savefig('abhinav.pdf')
     plt.clf()
-    plot_the_instances(to_decode_file,oracle_indices)
     original_message =original_string[len(preamble):]
     to_decode_data1= to_decode_file[start_data_index:  ]
     to_decode_data= to_decode_data1.astype(np.int64)
     #print "lengths of data going in:", len(original_message), len(to_decode_data)
     #error_rate_calculations(to_decode_data, original_message)
-    bin_rep_to_decode=decoding_byte_array(oracle_indices,to_decode_data)
+    bin_rep_to_decode=decoding_majority(oracle_indices,to_decode_data)
     #bin_rep_to_decode=decoding_byte_array2(oracle_indices,to_decode_data)
     print "\nGoing to decode"
     rs= reedsolo.RSCodec(32)
