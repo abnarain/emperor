@@ -23,18 +23,6 @@ fig_bottom = 0.25
 fig_top = 0.94
 fig_hspace = 0.5
 
-
-def plotter(x,y, outfile_name,title,xlabel,ylabel):
-    fig = Figure(linewidth=0.0)
-    fig.set_size_inches(fig_width,fig_length, forward=True)
-    Figure.subplots_adjust(fig, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
-    _subplot = fig.add_subplot(1,1,1)
-    _subplot.plot(x, label=xlabel)
-    _subplot.legend()
-    _subplot.set_title(title,fontsize=17)
-    canvas = FigureCanvasAgg(fig)
-    canvas.print_figure(outfile_name, dpi = 110)
-
 def error_rate_calculations(to_decode_data, original_message):
     xored_data =[]
     false_positives, false_negatives =0, 0
@@ -71,70 +59,6 @@ def start_index(to_decode_file):
             break
     print "value of the mean index is ", min_index_of_max, "len(preamble)-min_index_of_max: ",len(preamble)-  min_index_of_max
     return min_index_of_max
-
-<<<<<<< HEAD
-
-def decoding_byte_array(oracle_indices,to_decode_data):
-    ppm= oracle_indices
-    rs_decoder_input=[]
-    print "length of total received array is " , len(to_decode_data), "original length of transmissions", len(oracle_indices)
-    for i in range(0,len(ppm)):
-        tup=ppm[i]
-        idx=tup[0].astype(np.int64)
-        try :
-            d=to_decode_data[idx]
-        except:
-            print "index is", idx , len(ppm), i
-            break
-        if (to_decode_data[idx ]==1 and to_decode_data[idx+1]==0 and to_decode_data[idx+2]==1) :
-            rs_decoder_input.append('0')
-        elif (to_decode_data[idx ]==1 and to_decode_data[idx+1] ==1 ):# and to_decode_data[idx+2] ==0) :
-            rs_decoder_input.append('1') 
-        else:
-            if (to_decode_data[idx ]==0 and to_decode_data[idx+1]==1 and to_decode_data[idx+2]==0) :
-                rs_decoder_input.append('1') 
-            elif (to_decode_data[idx]==1 and to_decode_data[idx+1]==0 and to_decode_data[idx+2]==1 )  :
-                rs_decoder_input.append('0') 
-            else:
-                rs_decoder_input.append('1') 
-
-
-
-=======
-
-def decoding_byte_array(oracle_indices,to_decode_data):
-    ppm= oracle_indices
-    rs_decoder_input=[]
-    print "length of total received array is " , len(to_decode_data), "original length of transmissions", len(oracle_indices)
-    for i in range(0,len(ppm)):
-        tup=ppm[i]
-        idx=tup[0].astype(np.int64)
-        print idx, 
-        try :
-            d=to_decode_data[idx]
-        except:
-            print "index is", idx , len(ppm), i
-            break
-        if (to_decode_data[idx ]==1 and to_decode_data[idx+1]==0 and  to_decode_data[idx+2]==1)  :
-            rs_decoder_input.append('0')
-            continue
-        if (to_decode_data[idx ]==1 and to_decode_data[idx+1] ==1  and to_decode_data[idx+2] ==0) :
-            rs_decoder_input.append('1')
-            continue
->>>>>>> 2b5f1e3270b47d654953a0e44416d8afffa9ee8c
-    print len(rs_decoder_input)*1.0/8 , " this must be a number"
-    rs_feed=''.join(rs_decoder_input)
-    bin_rep_to_decode = bytearray()
-    print "length of rs feed is ",len(rs_feed)
-    #print "rs feed string is " ,rs_feed
-    for i in range(0,len(rs_feed),8):
-        x= rs_feed[i:i+8]
-        sx=struct.pack('B',int(x,2))
-        #print "x: ",x ," ",
-        print chr(ord(sx)),
-        bin_rep_to_decode.extend(sx)
-
-    return bin_rep_to_decode
 
 def decoding_byte_array2(oracle_indices,to_decode_data):
     ppm= oracle_indices
@@ -191,8 +115,6 @@ def decoding_byte_array2(oracle_indices,to_decode_data):
     print "\nnow the binary rep list length is= ", len(bin_rep_to_decode)
     return bin_rep_to_decode
 
-
-<<<<<<< HEAD
 
 def decoding_majority(oracle_indices,to_decode_data):
     ppm= oracle_indices
@@ -283,16 +205,6 @@ def decoding_byte_array2(oracle_indices,to_decode_data):
         bin_rep_to_decode.extend(sx)
     print "\nnow the binary rep list length is= ", len(bin_rep_to_decode)
     return bin_rep_to_decode
-=======
-def plot_the_instances(to_decode_file,ppm):
-    for i in range(0,len(ppm)):
-        #d=to_decode_file[idx]
-        tup=ppm[i]
-        idx=tup[0].astype(np.int64)
-        plt.plot(to_decode_file[idx: idx+5], "r*-")  
-    plt.savefig("start_of_data.pdf")
->>>>>>> 2b5f1e3270b47d654953a0e44416d8afffa9ee8c
-
 
 
 def main(argv):
@@ -325,33 +237,17 @@ def main(argv):
     to_decode_file=original_string
     print "\n lengths for measured data:" , len(to_decode_file), "length of orig transmission: ",len(original_string)
     get_index=start_index(to_decode_file)
-<<<<<<< HEAD
-    start_data_index = get_index #(m-get_index)  #m - (len(preamble) - get_index) +1
-    print "starting of data is  ", start_data_index
-    got_preamble=to_decode_file[get_index:get_index+len(preamble)]
-    #plt.plot(to_decode_file[get_index:get_index+len(preamble)],'*-')
-    plt.plot(to_decode_file[get_index-68:get_index],'*-')
-    plt.ylim(0,1)
-    plt.savefig('abhinav.pdf')
-    plt.clf()
-=======
     start_data_index = get_index+1 # get_index+1 #(m-get_index)  #m - (len(preamble) - get_index) +1
     print "starting of data is  ", start_data_index
     plt.plot(to_decode_file[:start_data_index],'*-')
     plt.savefig('abhinav.pdf')
     plt.clf()
-    plot_the_instances(to_decode_file,oracle_indices)
->>>>>>> 2b5f1e3270b47d654953a0e44416d8afffa9ee8c
     original_message =original_string[len(preamble):]
-    to_decode_data1= to_decode_file[start_data_index:  ]
+    to_decode_data1= to_decode_file[start_data_index:]
     to_decode_data= to_decode_data1.astype(np.int64)
     #print "lengths of data going in:", len(original_message), len(to_decode_data)
     #error_rate_calculations(to_decode_data, original_message)
-<<<<<<< HEAD
     bin_rep_to_decode=decoding_majority(oracle_indices,to_decode_data)
-=======
-    bin_rep_to_decode=decoding_byte_array(oracle_indices,to_decode_data)
->>>>>>> 2b5f1e3270b47d654953a0e44416d8afffa9ee8c
     #bin_rep_to_decode=decoding_byte_array2(oracle_indices,to_decode_data)
     print "\nGoing to decode"
     rs= reedsolo.RSCodec(32)
