@@ -234,7 +234,6 @@ def main(argv):
     to_decode_file = scipy.fromfile(open(inputfile), dtype=scipy.float32)
     original_string = scipy.fromfile(open(original_file), dtype=scipy.float32)
     oracle_indices = np.load(indices_file)
-    to_decode_file=original_string
     print "\n lengths for measured data:" , len(to_decode_file), "length of orig transmission: ",len(original_string)
     get_index=start_index(to_decode_file)
     start_data_index = get_index+1 # get_index+1 #(m-get_index)  #m - (len(preamble) - get_index) +1
