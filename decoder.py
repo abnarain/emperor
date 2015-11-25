@@ -1,7 +1,3 @@
-#This decoder basically produces a different decoder approach than decoder.py 
-#as there is problem with perfect synchronization of data . Implements a FSM
-#kind of approach and forgets the number of zeros emitted in between
-#look at decoder_array3 for exactly what's done
 import matplotlib
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')
@@ -12,43 +8,34 @@ import matplotlib.font_manager
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
-#this takes the data got from Gnuradio contaning the message and then calculates the errors that occur following the preamble attached to the message #It also gets the actual bitstream to be shoved into RS decoder to get the ascii message transmitted on the first go.
-
 fig_width = 10
 fig_length = 10.25
-# Can be used to adjust the border and spacing of the figure
 fig_left = 0.12
 fig_right = 0.94
 fig_bottom = 0.25
 fig_top = 0.94
 fig_hspace = 0.5
 
-def error_rate_calculations(to_decode_data, original_message):
-    xored_data =[]
-    false_positives, false_negatives =0, 0
-    print "length to_decode_data ", len(to_decode_data), "len of c",len(original_message)
-    assert(len(to_decode_data)==len(original_message))
-    for i in range(0,len(to_decode_data)):
+def error_rate_calculations(oracle_indices,to_decode_data):
+    ppm= oracle_indices
+    rs_decoder_input=[]
+    print "length of oracle indices/bits to transmit ", len(oracle_indices), "len of to_decode_data",len(to_decode_data)
+    print ppm[:10]
+    for i in range(0,len(ppm)):
+        tup=ppm[i]
+        print "(i,j is ",i,j , " tolook= ",tup, ") "
+        if tup[1]==111:
+            None
         xored_data.append(int(to_decode_data[i]) ^ int(original_message[i]))
         if original_message[i] == 0 and  to_decode_data[i] == 1 : 
             false_positives += 1
         if original_message[i] == 1 and  to_decode_data[i] == 0 : 
             false_negatives += 1
 
-    original_message = [2*i for i in original_message]
-    plt.plot(to_decode_data[:1200],'g',label="decoded data")
-    plt.plot(original_message[:1200], 'b',alpha=0.4,label="original data")
-    plt.savefig("seethetruth.pdf")
-    errors = sum(xored_data)
-    bit_error_rate= errors*1.0/len(xored_data)
-    print "whole length of message/xored_data", len(xored_data), "length of orig message ", len(original_message)
-    print " bit error rate with xored_length ", bit_error_rate
-    print " bit error rate with orig message length", errors*1.0/len(original_message)
-    print "false negatives ", false_negatives
-    print "false positives ", false_positives
+        elif tup[1] ==000:
+            None
 
 preamble= [1,0,1,0,1,1,0,0,1,1,0,1,1,1,0,1,1,0,1,0,0,1,0,0,1,1,1,0,0,0,1,0,1,1,1,1,0,0,1,0,1,0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,1,0,0,1,1,1,1]
-
 def start_index(to_decode_file):
     cor1 =  np.correlate(to_decode_file,preamble,"full")
     maximum=max(cor1)
@@ -60,51 +47,29 @@ def start_index(to_decode_file):
     print "value of the mean index is ", min_index_of_max, "len(preamble)-min_index_of_max: ",len(preamble)-  min_index_of_max
     return min_index_of_max
 
-def decoding_byte_array2(oracle_indices,to_decode_data):
+def decoding_maj2(oracle_indices,to_decode_data):
     ppm= oracle_indices
     rs_decoder_input=[]
-    j=0
-    import pylab
-    pylab.plot(to_decode_data[0:150],'b*-')
-    pylab.ylim(0,2)
-    pylab.savefig("tocheck.pdf")
-    j_last=0
-    tup_last=ppm[0]
-    print "length of oracle indices/bits to transmit ", len(oracle_indices), "len of to_decode_data",len(to_decode_data)
-    print ppm[:10]
+    print "length of total received array is " , len(to_decode_data), "original length of transmissions", len(oracle_indices)
     for i in range(0,len(ppm)):
         tup=ppm[i]
-        print "(i,j is ",i,j , " tolook= ",tup, ") "
-        if tup[1]==101:
-            while j < len(to_decode_data):
-                if to_decode_data[j] ==1 and to_decode_data[j+1] ==0 and to_decode_data[j+2] ==1 :
-                    rs_decoder_input.append('0')
-                    print "101 and tup AT j=",j, "j_last-j=",j- j_last, "tup diff= ", tup[0]-tup_last[0]
-                    j_last=j
-                    j=j+3
-                    tup_last=tup
-                    break
-                else:
-                    j=j+1
-        if tup[1]==11:
-            while j < len(to_decode_data):
-                if to_decode_data[j] ==1 and to_decode_data[j+1] ==1 :
-                    rs_decoder_input.append('1')
-                    print "11 and tup AT j=",j , "j_last=",j-j_last, "tup diff= ", tup[0]-tup_last[0]
-                    j_last=j
-                    j=j+2
-                    tup_last=tup
-                    break
-                else:
-                    j=j+1
-     #   if i>20:
-     #       sys.exit(1)
+        idx=tup[0].astype(np.int64)
+        try :
+            d=to_decode_data[idx]
+        except:
+            print "index is", idx , len(ppm), i
+            break
+        if ((to_decode_data[idx ]==1 and to_decode_data[idx+1]==1) or (to_decode_data[idx ]==1 and to_decode_data[idx+1]==0)or  (to_decode_data[idx ]==0 and to_decode_data[idx+1]==1 )) :
+            rs_decoder_input.append('1')
+        elif (to_decode_data[idx ]==0 and to_decode_data[idx+1] ==0 )  :
+            rs_decoder_input.append('0') 
+        else:
+           print "donno"
 
     print len(rs_decoder_input)*1.0/8 , " this must be a number"
     rs_feed=''.join(rs_decoder_input)
     bin_rep_to_decode = bytearray()
-    print "length of rs feed(string format) is ",len(rs_feed)
-    print "length of list created= ", rs_decoder_input
+    print "length of rs feed is ",len(rs_feed)
     #print "rs feed string is " ,rs_feed
     for i in range(0,len(rs_feed),8):
         x= rs_feed[i:i+8]
@@ -112,11 +77,10 @@ def decoding_byte_array2(oracle_indices,to_decode_data):
         #print "x: ",x ," ",
         print chr(ord(sx)),
         bin_rep_to_decode.extend(sx)
-    print "\nnow the binary rep list length is= ", len(bin_rep_to_decode)
     return bin_rep_to_decode
 
 
-def decoding_majority(oracle_indices,to_decode_data):
+def decoding_maj3(oracle_indices,to_decode_data):
     ppm= oracle_indices
     rs_decoder_input=[]
     print "length of total received array is " , len(to_decode_data), "original length of transmissions", len(oracle_indices)
@@ -135,8 +99,6 @@ def decoding_majority(oracle_indices,to_decode_data):
         else:
            print "donno"
 
-
-
     print len(rs_decoder_input)*1.0/8 , " this must be a number"
     rs_feed=''.join(rs_decoder_input)
     bin_rep_to_decode = bytearray()
@@ -151,51 +113,28 @@ def decoding_majority(oracle_indices,to_decode_data):
 
     return bin_rep_to_decode
 
-def decoding_byte_array2(oracle_indices,to_decode_data):
+def single_demod(oracle_indices,to_decode_data):
     ppm= oracle_indices
     rs_decoder_input=[]
-    j=0
-    import pylab
-    pylab.plot(to_decode_data[0:150],'b*-')
-    pylab.ylim(0,2)
-    pylab.savefig("tocheck.pdf")
-    j_last=0
-    tup_last=ppm[0]
-    print "length of oracle indices/bits to transmit ", len(oracle_indices), "len of to_decode_data",len(to_decode_data)
-    print ppm[:10]
+    print "length of total received array is " , len(to_decode_data), "original length of transmissions", len(oracle_indices)
     for i in range(0,len(ppm)):
         tup=ppm[i]
-        print "(i,j is ",i,j , " tolook= ",tup, ") "
-        if tup[1]==101:
-            while j < len(to_decode_data):
-                if to_decode_data[j] ==1 and to_decode_data[j+1] ==0 and to_decode_data[j+2] ==1 :
-                    rs_decoder_input.append('0')
-                    print "101 and tup AT j=",j, "j_last-j=",j- j_last, "tup diff= ", tup[0]-tup_last[0]
-                    j_last=j
-                    j=j+3
-                    tup_last=tup
-                    break
-                else:
-                    j=j+1
-        if tup[1]==11:
-            while j < len(to_decode_data):
-                if to_decode_data[j] ==1 and to_decode_data[j+1] ==1 :
-                    rs_decoder_input.append('1')
-                    print "11 and tup AT j=",j , "j_last=",j-j_last, "tup diff= ", tup[0]-tup_last[0]
-                    j_last=j
-                    j=j+2
-                    tup_last=tup
-                    break
-                else:
-                    j=j+1
-     #   if i>20:
-     #       sys.exit(1)
-
+        idx=tup[0].astype(np.int64)
+        try :
+            d=to_decode_data[idx]
+        except:
+            print "index is", idx , len(ppm), i
+            break
+        if ((to_decode_data[idx ]==1 and to_decode_data[idx+1]==0 and to_decode_data[idx+2]==0) or (to_decode_data[idx ]==1 and to_decode_data[idx+1]==0 and to_decode_data[idx+2]==1)or  (to_decode_data[idx ]==1 and to_decode_data[idx+1]==1 and to_decode_data[idx+2]==0) ) :
+            rs_decoder_input.append('1')
+        elif ((to_decode_data[idx ]==0 and to_decode_data[idx+1] ==0  and to_decode_data[idx+2]==0 ) or (to_decode_data[idx ]==0 and to_decode_data[idx+1]==0 and to_decode_data[idx+2]==1) )  :
+            rs_decoder_input.append('0') 
+        else:
+           print "donno"
     print len(rs_decoder_input)*1.0/8 , " this must be a number"
     rs_feed=''.join(rs_decoder_input)
     bin_rep_to_decode = bytearray()
-    print "length of rs feed(string format) is ",len(rs_feed)
-    print "length of list created= ", rs_decoder_input
+    print "length of rs feed is ",len(rs_feed)
     #print "rs feed string is " ,rs_feed
     for i in range(0,len(rs_feed),8):
         x= rs_feed[i:i+8]
@@ -203,8 +142,9 @@ def decoding_byte_array2(oracle_indices,to_decode_data):
         #print "x: ",x ," ",
         print chr(ord(sx)),
         bin_rep_to_decode.extend(sx)
-    print "\nnow the binary rep list length is= ", len(bin_rep_to_decode)
     return bin_rep_to_decode
+
+
 
 
 def main(argv):
@@ -246,7 +186,8 @@ def main(argv):
     to_decode_data= to_decode_data1.astype(np.int64)
     #print "lengths of data going in:", len(original_message), len(to_decode_data)
     #error_rate_calculations(to_decode_data, original_message)
-    bin_rep_to_decode=decoding_majority(oracle_indices,to_decode_data)
+    bin_rep_to_decode=decoding_maj3(oracle_indices,to_decode_data)
+    #bin_rep_to_decode=single_demod(oracle_indices,to_decode_data)
     #bin_rep_to_decode=decoding_byte_array2(oracle_indices,to_decode_data)
     print "\nGoing to decode"
     rs= reedsolo.RSCodec(32)
