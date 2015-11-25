@@ -43,12 +43,12 @@ def error_calculation(length, param_s1,param_s2,param_n1, param_n2, flag):
         pdf_fitted1 = expon.pdf(i,loc=param_s1,scale=param_s2) # fitted distribution - exponential
         pdf_fitted2 = expon.pdf(i,loc=param_n1,scale=param_n2) # fitted distribution - exponential
     l1_norm=0
-    mean_square_err =mean_square_error(pdf_fitted1, pdf_fitted2)
+    mean_square_err =mean_squared_error(pdf_fitted1, pdf_fitted2)
     l1_norm = sum(abs(pdf_fitted1[i] - pdf_fitted2))
 
     root_mean_square_err = sqrt(mean_square_err)
     mean_l1_norm = 1.0*l1_norm/length
-    print "Square error= ", square_err , "Root Mean Square Error= ", root_mean_square_err
+    print "Square error= ", mean_square_err , "Root Mean Square Error= ", root_mean_square_err
     print  "L1 norm= ",  l1_norm , "MSE= ", mean_l1_norm 
 
 def expected_value(data):
@@ -161,7 +161,10 @@ def main(argv):
     mag, mag_noise, avg_mag, avg_noise=[],[], [], []
     data= scipy.fromfile(open(inputfile), dtype=scipy.complex64)
     l=inputfile.split('_')
-    fname= '_'.join([l[-2],'_',l[-1][:-4]])
+    print "\nthe elements are: ", l[-3][-2:], l[-1]
+    fname= '_'.join([l[-2],  l[-3][-2:] ,l[-1][:-4]])
+
+    print "filename is " , fname
     for i in range(0,len(data)):
         mag.append(np.absolute(data[i]))
     avg_mag=movingaverage(mag ,10)
@@ -229,20 +232,20 @@ def main(argv):
         except:
             print " dint get noise entropy " 
 
-        #min_length = min(len(mag_noise), len(mag))
-        #print " modelled as exponential distribution " 
-        #error_calculation(min_length, ps_exponential[0], ps_exponential[1], pn_exponential[0], pn_exponential[1],0)
-        #print "\n \n modelled as rayleigh distribution " 
-        #error_calculation(min_length, ps_rayleigh[0], ps_rayleigh[1], pn_rayleigh[0], pn_rayleigh[1],1)
+        min_length = min(len(mag_noise), len(mag))
+        print " modelled as exponential distribution " 
+        error_calculation(min_length, ps_exponential[0], ps_exponential[1], pn_exponential[0], pn_exponential[1],0)
+        print "\n \n modelled as rayleigh distribution " 
+        error_calculation(min_length, ps_rayleigh[0], ps_rayleigh[1], pn_rayleigh[0], pn_rayleigh[1],1)
 
 
-        #min_length = min(len(mag_noise), len(mag))
-        #min_length_avg = min(len(avg_noise), len(avg_mag))
-        #print min_length_avg, len(avg_noise), len(avg_mag) ,len(mag)
-        #plot_hist(mag[:min_length],'combined'+fname,1,data2=mag_noise[:min_length])
-        #plot_hist(avg_mag[:min_length_avg],'avg_combined'+fname,1,data2=avg_noise[:min_length_avg])
-        #plot_hist(mag[:min_length],'combined'+fname,0,data2=mag_noise[:min_length])
-        #plot_hist(avg_mag[:min_length_avg],'avg_combined'+fname,0,data2=avg_noise[:min_length_avg])
+        min_length = min(len(mag_noise), len(mag))
+        min_length_avg = min(len(avg_noise), len(avg_mag))
+        print min_length_avg, len(avg_noise), len(avg_mag) ,len(mag)
+        plot_hist(mag[:min_length],'combined_'+fname,1,data2=mag_noise[:min_length])
+        plot_hist(avg_mag[:min_length_avg],'avg_combined_'+fname,1,data2=avg_noise[:min_length_avg])
+        plot_hist(mag[:min_length],'combined_'+fname,0,data2=mag_noise[:min_length])
+        plot_hist(avg_mag[:min_length_avg],'avg_combined_'+fname,0,data2=avg_noise[:min_length_avg])
 
 if __name__=='__main__':
     print "in main"
