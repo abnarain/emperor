@@ -11,7 +11,6 @@ from matplotlib.backends.backend_agg import FigureCanvasAgg
 from matplotlib import pyplot
 from sklearn.metrics import mean_squared_error
 from math import sqrt,log
-#rms = sqrt(mean_squared_error(y_actual, y_predicted))
 
 fig_width = 10
 fig_length = 10.25
@@ -48,8 +47,10 @@ def error_calculation(length, param_s1,param_s2,param_n1, param_n2, flag):
 
     root_mean_square_err = sqrt(mean_square_err)
     mean_l1_norm = 1.0*l1_norm/length
-    print "Square error= ", mean_square_err , "Root Mean Square Error= ", root_mean_square_err
-    print  "L1 norm= ",  l1_norm , "MSE= ", mean_l1_norm 
+    #print "Mean Square error= ", mean_square_err 
+    #print  "L1 norm= ",  l1_norm 
+    print "Root Mean Square Error= ", root_mean_square_err
+    print "Mean L1 norm= ", mean_l1_norm 
 
 def expected_value(data):
     return sum(data)*1.0/len(data)
@@ -66,9 +67,9 @@ def plot_hist(data,filename,flag,data2=None):
     fig2.set_size_inches(fig_width,fig_length, forward=True)
     Figure.subplots_adjust(fig2, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
     _subplot2 = fig2.add_subplot(1,1,1)
-    n,bins,patches= _subplot2.hist(data,bins=2000,normed=True,color='g')
+    n,bins,patches= _subplot2.hist(data,bins=2000,normed=True,color='g',alpha=0.2)
     if not (data2 ==None):
-        n2, bins2, patches2 = _subplot2.hist(data2,bins=2000,normed=True,color='r')
+        n2, bins2, patches2 = _subplot2.hist(data2,bins=2000,normed=True,color='r',alpha=0.4)
     if flag==1:
         _subplot2.set_xscale('log')
         filename= filename+'_log'
@@ -89,7 +90,6 @@ def curve_fitting_exp(x,a,b,c):
 
 def calculate_exponential(data,outfile_name):
     n,bins =  np.histogram(data, density=True)  # #_subplot.hist(data,bins=1200,density=1) 
-
     fig1 = Figure(linewidth=0.0)
     fig1.set_size_inches(fig_width,fig_length, forward=True)
     Figure.subplots_adjust(fig1, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
@@ -218,12 +218,12 @@ def main(argv):
         print "Avg Noise: Expected value acc to time series (E(nn*)) ", avg_pn, "dB ", 10*log(avg_pn,10)
 
         try:
-            print "the kl distance between th enoise and the signal is=  ", kl_distance(mag,mag_noise)
+            print "kl distance: inst. noise and signal is=  ", kl_distance(mag,mag_noise)
         except:
             print "dint get noise signal kl divergence wrt noise"
         
         try:
-            print "the kl distance between th enoise and the signal is=  ", kl_distance(avg_mag,avg_noise)
+            print "kl distance: Avg values of noise and signal is=  ", kl_distance(avg_mag,avg_noise)
         except:
             print " dint get the avg signal kl divergence wrt avg noise "
             
@@ -242,10 +242,10 @@ def main(argv):
         min_length = min(len(mag_noise), len(mag))
         min_length_avg = min(len(avg_noise), len(avg_mag))
         print min_length_avg, len(avg_noise), len(avg_mag) ,len(mag)
-        plot_hist(mag[:min_length],'combined_'+fname,1,data2=mag_noise[:min_length])
-        plot_hist(avg_mag[:min_length_avg],'avg_combined_'+fname,1,data2=avg_noise[:min_length_avg])
-        plot_hist(mag[:min_length],'combined_'+fname,0,data2=mag_noise[:min_length])
-        plot_hist(avg_mag[:min_length_avg],'avg_combined_'+fname,0,data2=avg_noise[:min_length_avg])
+        plot_hist(mag[:min_length],'combined'+fname,1,data2=mag_noise[:min_length])
+        plot_hist(avg_mag[:min_length_avg],'avg_combined'+fname,1,data2=avg_noise[:min_length_avg])
+        plot_hist(mag[:min_length],'combined'+fname,0,data2=mag_noise[:min_length])
+        plot_hist(avg_mag[:min_length_avg],'avg_combined'+fname,0,data2=avg_noise[:min_length_avg])
 
 if __name__=='__main__':
     print "in main"
