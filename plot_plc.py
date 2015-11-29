@@ -74,7 +74,7 @@ def plot_spectral_density(data,fs,filename,flag):
 def filereader(filename): 
     z= scipy.fromfile(open(filename), dtype=scipy.complex64)
     # dtype with scipy.int16, scipy.int32, scipy.float32, scipy.complex64 or whatever type you were using.
-    z=z[0:1000]
+    #z=z[0:1000]
     N=len(z)
     mag, phase,x,y = [], [], [], []
     for i in range(0, len(z)):
@@ -110,6 +110,9 @@ def plotSpectrum(y,Fs,filename,flag):
     canvas.print_figure(filename+'.pdf', dpi = 110)
 
 def plot_fft(x, fs, N, outfile_name,flag):
+    '''
+    Same as above function to plot the Single sided FFT
+    '''
     Fx= fft(x)
     xf = np.linspace(0.0, fs/2.0, N/2)
     fig = give_subplot()
@@ -141,21 +144,20 @@ def plot_complex_fft(x, fs, N, outfile_name, flag):
     canvas = FigureCanvasAgg(fig)
     canvas.print_figure(outfile_name+'.pdf',dpi = 110)
 
-def hists(x,y, outfile_name,title,xlabel,ylabel):
+def plot_hists2(x,y, outfile_name,xlabel='amplitude',ylabel='counts'):
     fig = give_subplot()
     _subplot = fig.add_subplot(1,1,1)
     _subplot.hist(x,color='b', label=xlabel)
-    _subplot.hist(y,color='r', label=ylabel, alpha=0.5)
+    _subplot.hist(y,color='r', label=ylabel, alpha=0.2)
     _subplot.legend()
-    _subplot.set_title(title,fontsize=17)
     canvas = FigureCanvasAgg(fig)
     canvas.print_figure(outfile_name +'.pdf', dpi = 110)
 
-def hists_3(x,y,z, outfile_name,xlabel,ylabel,zlabel):
+def plot_hists3(x,y,z, outfile_name,xlabel,ylabel,zlabel):
     fig = give_subplot()
     _subplot = fig.add_subplot(1,1,1)
     _subplot.hist(x,color='b', label=xlabel)
-    _subplot.hist(y,color='r', label=ylabel, alpha=0.5)
+    _subplot.hist(y,color='r', label=ylabel, alpha=0.2)
     _subplot.hist(z,color='g', label=zlabel, alpha=0.4)
     _subplot.legend()
     canvas = FigureCanvasAgg(fig)
@@ -164,7 +166,7 @@ def hists_3(x,y,z, outfile_name,xlabel,ylabel,zlabel):
 def plot_hist(mag,filename):
     fig = give_subplot()
     _subplot= fig.add_subplot(1,1,1)
-    n, bins, patches = _subplot.hist(mag, 1250, facecolor='green')
+    n, bins, patches = _subplot.hist(mag, 1250, facecolor='green',alpha=0.2)
     canvas = FigureCanvasAgg(fig)
     canvas.print_figure(filename+'.pdf', dpi = 110)
 
@@ -195,7 +197,7 @@ def hurst(ts):
     return poly[0]*2.0
 
 
-def main2(argv):
+def main(argv):
     inputfile=''
     noisefile=''
     noiseflag=0
@@ -211,7 +213,7 @@ def main2(argv):
             sys.exit()
         elif opt in ("-i", "--ifile"):
             inputfile = arg
-        elif opt in ("-f", "--nfile"):
+        elif opt in ("-n", "--nfile"):
             noisefile = arg
             noiseflag=1
         else:
@@ -223,21 +225,27 @@ def main2(argv):
     [x,y, mag, phase,z, Ns] = filereader(inputfile)
     del x, y, phase
     l=inputfile.split('_')
-    print "\nthe elements are: ", l[-3][-2:], l[-1]
-    filename= '_'.join([l[-2],  l[-3][-2:] ,l[-1][:-4]])
-
+    print "\nthe elements are: ", l
+    filename= '_'.join([ l[1][-4:] ,l[2],l[3]])
     print "input file is",inputfile
     print "length of f is ", len(mag)
     fs=200* math.pow(10,3)
     flag=1
     print "sampling frequency is ",fs
-    plot_hist(mag,filename+'histogram_bins_1250')
-    fs=2*math.pow(10,5)
-    plot_perdiodogram(z,fs, filename+'_periodogram',flag)
-    plot_spectral_density(z,fs,filename+'_welch_psd',flag)
+    plot_hist(mag,filename+'hist_1250')
     plotSpectrum(z,fs,filename+'_fft',flag)
-    #plot_acf_pacf(mag,post)
+    plot_perdiodogram(z,fs,filename+'_periodogram',flag)
+    plot_complex_fft(z, fs, Ns, filename+'_cc_fft', flag)
     print "Hurst(data's magnitude)index of :   %s" % hurst(mag)
+    #plot_spectral_density(z,fs,filename+'_welch_psd',flag) #averaged
+    if noiseflag==1:
+        [xn,yn,magn,phasen,zn,Nsn]=filereader(noisefile)
+        plot_hist(magn,filename+'hist_noise_1250')
+        plotSpectrum(magn,fs,filename+'noise_fft',flag)
+        plot_perdiodogram(zn,fs,filename+'noise_periodogram',flag)
+        plot_complex_fft(zn, fs, Nsn, filename+'noise_cc_fft', flag)
+        plot_hists2(mag,magn, filename+'noise_data_',xlabel='amplitude',ylabel='counts')
+
 
 if __name__=='__main__':
-    main2(sys.argv[1:])
+    main(sys.argv[1:])
