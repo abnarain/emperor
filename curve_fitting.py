@@ -52,9 +52,6 @@ def error_calculation(length, param_s1,param_s2,param_n1, param_n2, flag):
     print "Root Mean Square Error= ", root_mean_square_err
     print "Mean L1 norm= ", mean_l1_norm 
 
-def expected_value(data):
-    return sum(data)*1.0/len(data)
-
 def kl_distance(pk,qk=None):
     if qk != None:
         min_len = min(len(pk),len(qk))
@@ -62,20 +59,6 @@ def kl_distance(pk,qk=None):
     else:    
         return entropy(pk, qk)
 
-def plot_hist(data,filename,flag,data2=None):
-    fig2 = Figure(linewidth=0.0)
-    fig2.set_size_inches(fig_width,fig_length, forward=True)
-    Figure.subplots_adjust(fig2, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
-    _subplot2 = fig2.add_subplot(1,1,1)
-    n,bins,patches= _subplot2.hist(data,bins=2000,normed=True,color='g',alpha=0.2)
-    if not (data2 ==None):
-        n2, bins2, patches2 = _subplot2.hist(data2,bins=2000,normed=True,color='r',alpha=0.4)
-    if flag==1:
-        _subplot2.set_xscale('log')
-        filename= filename+'_log'
-
-    canvas = FigureCanvasAgg(fig2)
-    canvas.print_figure(filename+'.pdf', dpi = 110)
 
 def curve_fitting_exp(x,a,b,c):
     def func(x, a, b, c):
@@ -111,7 +94,6 @@ def calculate_exponential(data,outfile_name):
 
 def calculate_rayleigh(data,outfile_name):
     n, bins=  np.histogram(data,density=1) 
-
     fig1 = Figure(linewidth=0.0)
     fig1.set_size_inches(fig_width,fig_length, forward=True)
     Figure.subplots_adjust(fig1, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
@@ -181,17 +163,10 @@ def main(argv):
     print "Signal: exponential distribution parameters: expected= ", ps_exponential[0], "scale is ",ps_exponential[1]
     print "Avg Signal: exponential distribution parameters: expected= ",avg_ps_exponential[0], "scale is ",avg_ps_exponential[1]
 
-    ps = expected_value(mag)
-    avg_ps = expected_value(avg_mag)
-
-    print "Signal: expected value acc to time series (E(yy*))  ", ps, "dB" ,10*log(ps,10)
-    print "Avg Signal: expected value acc to time series (E(yy*))  ", avg_ps, "dB" ,10*log(avg_ps,10)
-
     try:
         print "entropy of signal is= ", kl_distance(mag)
     except:
         print "dint get signal entropy "
-
 
     if noiseflag==1:
         noise= scipy.fromfile(open(noisefile), dtype=scipy.complex64)
@@ -212,15 +187,6 @@ def main(argv):
         avg_pn_exponential= calculate_exponential(avg_noise,'noise_exponential'+fname)
         print "Avg Noise: exponential distribution parameters: expected= ", avg_pn_exponential[0], "var ",avg_pn_exponential[1]
 
-        pn = expected_value(mag_noise)
-        print "Noise: Expected value acc to time series (E(nn*)) ", pn , "dB ", 10*log(pn,10)
-        avg_pn = expected_value(avg_noise)                                       
-        print "Avg Noise: Expected value acc to time series (E(nn*)) ", avg_pn, "dB ", 10*log(avg_pn,10)
-
-        try:
-            print "kl distance: inst. noise and signal is=  ", kl_distance(mag,mag_noise)
-        except:
-            print "dint get noise signal kl divergence wrt noise"
         
         try:
             print "kl distance: Avg values of noise and signal is=  ", kl_distance(avg_mag,avg_noise)
@@ -237,15 +203,6 @@ def main(argv):
         error_calculation(min_length, ps_exponential[0], ps_exponential[1], pn_exponential[0], pn_exponential[1],0)
         print "\n \n modelled as rayleigh distribution " 
         error_calculation(min_length, ps_rayleigh[0], ps_rayleigh[1], pn_rayleigh[0], pn_rayleigh[1],1)
-
-
-        min_length = min(len(mag_noise), len(mag))
-        min_length_avg = min(len(avg_noise), len(avg_mag))
-        print min_length_avg, len(avg_noise), len(avg_mag) ,len(mag)
-        plot_hist(mag[:min_length],'combined'+fname,1,data2=mag_noise[:min_length])
-        plot_hist(avg_mag[:min_length_avg],'avg_combined'+fname,1,data2=avg_noise[:min_length_avg])
-        plot_hist(mag[:min_length],'combined'+fname,0,data2=mag_noise[:min_length])
-        plot_hist(avg_mag[:min_length_avg],'avg_combined'+fname,0,data2=avg_noise[:min_length_avg])
 
 if __name__=='__main__':
     print "in main"
