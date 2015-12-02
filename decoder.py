@@ -16,26 +16,48 @@ fig_bottom = 0.25
 fig_top = 0.94
 fig_hspace = 0.5
 
-def error_rate_calculations(oracle_indices,to_decode_data):
+preamble= [1,0,1,0,1,1,0,0,1,1,0,1,1,1,0,1,1,0,1,0,0,1,0,0,1,1,1,0,0,0,1,0,1,1,1,1,0,0,1,0,1,0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,1,0,0,1,1,1,1]
+def ber_repetition(oracle_indices,to_decode_data):
     ppm= oracle_indices
-    rs_decoder_input=[]
     print "length of oracle indices/bits to transmit ", len(oracle_indices), "len of to_decode_data",len(to_decode_data)
     print ppm[:10]
     for i in range(0,len(ppm)):
         tup=ppm[i]
-        print "(i,j is ",i,j , " tolook= ",tup, ") "
+        idx=tup[0].astype(np.int64)
         if tup[1]==111:
-            None
-        xored_data.append(int(to_decode_data[i]) ^ int(original_message[i]))
-        if original_message[i] == 0 and  to_decode_data[i] == 1 : 
-            false_positives += 1
-        if original_message[i] == 1 and  to_decode_data[i] == 0 : 
-            false_negatives += 1
-
+            xored_data.append(int(to_decode_data[idx]) ^ int(original_message[idx]))
+            if original_message[i] == 1 and  to_decode_data[i] == 0 :
+                false_negatives += 1
         elif tup[1] ==000:
-            None
+            if original_message[i] == 0 and  to_decode_data[i] == 1 :
+                false_positives += 1
+            xored_data.append(int(to_decode_data[idx]) ^ int(original_message[idx]))
+        else:
+            print "Impossible !"
 
-preamble= [1,0,1,0,1,1,0,0,1,1,0,1,1,1,0,1,1,0,1,0,0,1,0,0,1,1,1,0,0,0,1,0,1,1,1,1,0,0,1,0,1,0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,1,0,0,1,1,1,1]
+    print "False Positives = ", false_positives
+    print "False Negatives = ", false_negatives
+
+def ber_single(oracle_indices,to_decode_data):
+    ppm= oracle_indices
+    print "length of oracle indices/bits to transmit ", len(oracle_indices), "len of to_decode_data",len(to_decode_data)
+    print ppm[:10]
+    for i in range(0,len(ppm)):
+        tup=ppm[i]
+        idx=tup[0].astype(np.int64)
+        if tup[1]==100:
+            xored_data.append(int(to_decode_data[idx]) ^ int(original_message[idx]))
+            if original_message[i] == 1 and  to_decode_data[i] == 0 :
+                false_negatives += 1
+        elif tup[1] ==000:
+            if original_message[i] == 0 and  to_decode_data[i] == 1 :
+                false_positives += 1
+            xored_data.append(int(to_decode_data[idx]) ^ int(original_message[idx]))
+        else:
+            print "Impossible!"
+    print "False Positives = ", false_positives
+    print "False Negatives = ", false_negatives
+
 def start_index(to_decode_file):
     cor1 =  np.correlate(to_decode_file,preamble,"full")
     maximum=max(cor1)
@@ -125,9 +147,9 @@ def single_demod(oracle_indices,to_decode_data):
         except:
             print "index is", idx , len(ppm), i
             break
-        if ((to_decode_data[idx ]==1 and to_decode_data[idx+1]==0 and to_decode_data[idx+2]==0) or (to_decode_data[idx ]==1 and to_decode_data[idx+1]==0 and to_decode_data[idx+2]==1)or  (to_decode_data[idx ]==1 and to_decode_data[idx+1]==1 and to_decode_data[idx+2]==0) ) :
+        if (to_decode_data[idx ]==1) :
             rs_decoder_input.append('1')
-        elif ((to_decode_data[idx ]==0 and to_decode_data[idx+1] ==0  and to_decode_data[idx+2]==0 ) or (to_decode_data[idx ]==0 and to_decode_data[idx+1]==0 and to_decode_data[idx+2]==1) )  :
+        elif (to_decode_data[idx ]==0): # or to_decode_data[idx+1] ==0 or to_decode_data[idx+2]==0 ) : #or (to_decode_data[idx ]==0 and to_decode_data[idx+1]==0 and to_decode_data[idx+2]==1) )  :
             rs_decoder_input.append('0') 
         else:
            print "donno"
@@ -149,8 +171,8 @@ def single_demod(oracle_indices,to_decode_data):
 
 def main(argv):
     inputfile=''
-    ftype=''
     original_file=''
+    indices_file=''
     try:
         opts, args = getopt.getopt(argv,"h:d:i:o:",["dfile=","itype=","ofile="])
     except getopt.GetoptError:
@@ -170,6 +192,9 @@ def main(argv):
         else:
             print "check help for usage" 
             sys.exit()
+
+    print inputfile
+    print    inputfile.split('_')
 
     to_decode_file = scipy.fromfile(open(inputfile), dtype=scipy.float32)
     original_string = scipy.fromfile(open(original_file), dtype=scipy.float32)
