@@ -37,10 +37,10 @@ def error_calculation(bins, param_s1,param_s2,param_n1, param_n2, flag):
         pdf_fitted2 = expon.pdf(bins,loc=param_n1,scale=param_n2) # fitted distribution - exponential
     l1_norm=0
     mean_square_err =mean_squared_error(pdf_fitted1, pdf_fitted2)
-    l1_norm = sum(abs(pdf_fitted1[i] - pdf_fitted2))
+    l1_norm = sum(abs(pdf_fitted1 - pdf_fitted2))
 
     root_mean_square_err = sqrt(mean_square_err)
-    mean_l1_norm = 1.0*l1_norm/length
+    mean_l1_norm = 1.0*l1_norm/len(pdf_fitted1)
     print "Root Mean Square Error= ", root_mean_square_err
     print "Mean L1 norm= ", mean_l1_norm 
 
@@ -148,10 +148,10 @@ def main(argv):
     fig_bottom, top = fig_top, hspace = fig_hspace)
     _subplot = fig1.add_subplot(1,1,1)
 
-    data=map(np.absolute,z_data)
+    data=map(np.absolute,z_data[:1000])
     data_hist, data_bins= np.histogram(data,200,density=1)
     [data_exp_param, data_pdf_exp_fitted, data_rayleigh_param, data_pdf_rayleigh_fitted] = approximating_dists(data,data_bins)
-    print "Entropy of transmission ", kl_divergence(data_pdf_rayleigh_fitted)
+    print "Entropy of transmission ", kl_distance(data_pdf_rayleigh_fitted)
     print "data exp param ",data_exp_param, "data rayleigh param ", data_rayleigh_param
     _subplot.hist(data,200,facecolor='red', alpha=0.6, normed=1, label= 'data')
     _subplot.plot(data_bins,data_pdf_rayleigh_fitted,'r-',label='data estimate rayleigh')
@@ -159,15 +159,15 @@ def main(argv):
     
     if noiseflag==1 and noiseflag==1:
         z_noise= scipy.fromfile(open(niq_file), dtype=scipy.complex64)
-        noise =map(np.absolute,z_noise)
+        noise =map(np.absolute,z_noise[:1000])
         noise_hist, noise_bins= np.histogram(noise,200,density=1)
         _subplot.hist(noise,200,normed=1,alpha=0.5, facecolor='blue', label='noise')
 
         [noise_exp_param, noise_pdf_exp_fitted, noise_rayleigh_param, noise_pdf_rayleigh_fitted]= pickle.load(open(noisefile, "rb" ))
         _subplot.plot(noise_bins,noise_pdf_rayleigh_fitted,'b-', label='noise estimate rayleigh')
         _subplot.plot(noise_bins,noise_pdf_exp_fitted,'b^', label='noise estimate exp')
-        print "Entropy of noise " , kl_divergence(noise_pdf_rayleigh_fitted)
-        print "KL Divergence of data wrt noise(rayleigh) ", kl_divergence(data_pdf_rayleigh_fitted, noise_pdf_rayleigh_fitted)
+        print "Entropy of noise " , kl_distance(noise_pdf_rayleigh_fitted)
+        print "KL Divergence of data wrt noise(rayleigh) ", kl_distance(data_pdf_rayleigh_fitted, noise_pdf_rayleigh_fitted)
 
         print "\n modelled as exponential distribution "
         error_calculation(noise_bins, data_exp_param[0], data_exp_param[1], noise_exp_param[0], noise_exp_param[1],0)
@@ -176,14 +176,13 @@ def main(argv):
 
     if onesflag==1 and onesflag1==1:
          z_ones= scipy.fromfile(open(oiq_file), dtype=scipy.complex64)
-         ones =map(np.absolute,z_ones)
+         ones =map(np.absolute,z_ones[:1000])
          ones_hist, ones_bins= np.histogram(ones,200,density=1)
          _subplot.hist(ones,200,normed=1,alpha=0.8, facecolor='green', label='ones')
 
          [ones_exp_param, ones_pdf_exp_fitted, ones_rayleigh_param, ones_pdf_rayleigh_fitted] = pickle.load(open(onesfile, "rb" ))
          _subplot.plot(ones_bins,ones_pdf_rayleigh_fitted,'g-', label='ones estimate rayleigh')
          _subplot.plot(ones_bins,ones_pdf_exp_fitted,'g^', label='ones estimate exp')
-
 
     _subplot.legend()
     canvas = FigureCanvasAgg(fig1)
