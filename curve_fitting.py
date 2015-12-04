@@ -1,22 +1,18 @@
-import matplotlib
-# Force matplotlib to not use any Xwindows backend.
-matplotlib.use('Agg')
+import sys, scipy, getopt, matplotlib, pickle
+matplotlib.use('Agg') # Force matplotlib to not use any Xwindows backend.
+import numpy as np
 from scipy.stats import norm,rayleigh, expon, entropy
 from scipy.optimize import curve_fit
-import sys, scipy, getopt
 import matplotlib.font_manager
-import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
-
-from matplotlib import pyplot
 from sklearn.metrics import mean_squared_error
 from math import sqrt,log
 
+# Can be used to adjust the border and spacing of the figure    
 fig_width = 10
 fig_length = 10.25
-# Can be used to adjust the border and spacing of the figure    
 fig_left = 0.12
 fig_right = 0.94
 fig_bottom = 0.25
@@ -32,31 +28,33 @@ def movingaverage(interval, window_size):
 # You can compare the mean == That is the expectation of the value (E[nn*])
 # You can compare the expectaton using the values in the curve estimated 
 
-def error_calculation(length, param_s1,param_s2,param_n1, param_n2, flag):
-    i=np.arange(length)
+def error_calculation(bins, param_s1,param_s2,param_n1, param_n2, flag):
     if flag==1:
-        pdf_fitted1 = rayleigh.pdf(i,loc=param_s1,scale=param_s2) # fitted distribution - rayleigh
-        pdf_fitted2 = rayleigh.pdf(i,loc=param_n1,scale=param_n2) # fitted distribution - rayleigh
+        pdf_fitted1 = rayleigh.pdf(bins,loc=param_s1,scale=param_s2) # fitted distribution - rayleigh
+        pdf_fitted2 = rayleigh.pdf(bins,loc=param_n1,scale=param_n2) # fitted distribution - rayleigh
     elif flag==0:
-        pdf_fitted1 = expon.pdf(i,loc=param_s1,scale=param_s2) # fitted distribution - exponential
-        pdf_fitted2 = expon.pdf(i,loc=param_n1,scale=param_n2) # fitted distribution - exponential
+        pdf_fitted1 = expon.pdf(bins,loc=param_s1,scale=param_s2) # fitted distribution - exponential
+        pdf_fitted2 = expon.pdf(bins,loc=param_n1,scale=param_n2) # fitted distribution - exponential
     l1_norm=0
     mean_square_err =mean_squared_error(pdf_fitted1, pdf_fitted2)
     l1_norm = sum(abs(pdf_fitted1[i] - pdf_fitted2))
 
     root_mean_square_err = sqrt(mean_square_err)
     mean_l1_norm = 1.0*l1_norm/length
-    #print "Mean Square error= ", mean_square_err 
-    #print  "L1 norm= ",  l1_norm 
     print "Root Mean Square Error= ", root_mean_square_err
     print "Mean L1 norm= ", mean_l1_norm 
 
 def kl_distance(pk,qk=None):
+    '''
+    One has to remember that KL divergence is done for two probability distributions 
+    and not a data series, so first get the normalized histogram to feed into this.
+    One can also first estimate the distribution and then feed it to get the distribution.
+    '''
     if qk != None:
         min_len = min(len(pk),len(qk))
-        return entropy(pk[:min_len], qk[:min_len])
+        return entropy(pk[:min_len], qk[:min_len],base=2)
     else:    
-        return entropy(pk, qk)
+        return entropy(pk, qk,base=2)
 
 
 def curve_fitting_exp(data):
@@ -66,10 +64,10 @@ def curve_fitting_exp(data):
     def fitfuncRayleigh (x, a,b,c,d):
         return x*a/(b**2)*exp(-0.5*((x-c)/b)**2)+d
 
-    def fitfuncGaussian(x,a,b,c,d)
+    def fitfuncGaussian(x,a,b,c,d):
         return a*exp(-0.5*((x-b)/a)**2)+d
 
-    def fitfuncExp (x,a,b,c,d)
+    def fitfuncExp (x,a,b,c,d):
         return  a*exp((x-b)*a)+c 
 
     def func(x, a, b, c):
@@ -77,139 +75,122 @@ def curve_fitting_exp(data):
 
     popt, pcov = curve_fit(func, xdata, ydata)
     return popt
-
-def calculate_exponential(data,outfile_name):
-    n,bins =  np.histogram(data, density=True)  # #_subplot.hist(data,bins=1200,density=1) 
-    fig1 = Figure(linewidth=0.0)
-    fig1.set_size_inches(fig_width,fig_length, forward=True)
-    Figure.subplots_adjust(fig1, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
-    _subplot1 = fig1.add_subplot(1,1,1)
-    try:
-        param = expon.fit(data) # distribution fitting - location, scale - mean and MLE estimator 
-    except:
-        print " exponential fit not working "
-    try:
-        pdf_fitted = expon.pdf(bins,loc=param[0],scale=param[1]) # fitted distribution
-    except:
-        print " the exp pdf dint work, returning ..."
-        return [0,0]
-    _subplot1.plot(pdf_fitted)
-    canvas = FigureCanvasAgg(fig1)
-    canvas.print_figure(outfile_name+'_pdf_fitted.pdf', dpi = 110)
-
-    return param
-
-def calculate_rayleigh(data,outfile_name):
-    n, bins=  np.histogram(data,density=1)
-    fig1 = Figure(linewidth=0.0)
-    fig1.set_size_inches(fig_width,fig_length, forward=True)
-    Figure.subplots_adjust(fig1, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
-    _subplot1 = fig1.add_subplot(1,1,1)
-    try : 
-        param = rayleigh.fit(data) # distribution fitting - location, scale - mean and MLE estimator 
+def approximating_dists(data,bins):
+    try :
+        rayleigh_param = rayleigh.fit(data)
     except:
         print "screwed raleigh fit "
+    print "params for rayleigh " ,rayleigh_param
+
     try:
-        pdf_fitted = rayleigh.pdf(bins,loc=param[0],scale=param[1]) # fitted distribution
+        pdf_rayleigh_fitted = rayleigh.pdf(bins, *rayleigh_param[:-2],loc=rayleigh_param[0],scale=rayleigh_param[1]) # fitted distribution
     except :
         print " returning as nothing to plot "
-        return [0,0]
 
-    _subplot1.plot(pdf_fitted)
-    canvas = FigureCanvasAgg(fig1)
-    canvas.print_figure(outfile_name+'_pdf_fitted.pdf', dpi = 110)
-    return param
+    try :
+        exp_param = expon.fit(data)
+    except:
+        print "screwed expon fit "
+    print "params for exponential ", exp_param
+
+    try:
+        pdf_exp_fitted = expon.pdf(bins, *exp_param[:-2],loc=exp_param[0],scale=exp_param[1]) # fitted distribution
+    except :
+        print " returning as nothing to plot "
+    return [exp_param, pdf_exp_fitted, rayleigh_param, pdf_rayleigh_fitted]
 
 
 def main(argv):
-    inputfile=''
-    ftype=''
-    noisefile=''
-    noiseflag=0
+    inputfile,onesfile,noisefile,niqfile,oiqfile='','','','',''
+    noiseflag, onesflag, noiseflag1, onesflag1=0,0,0,0
+    print " main "
     try:
-        opts, args = getopt.getopt(argv,"h:i:f:n:",["ifile=","ftype=","ntype="])
+        opts, args = getopt.getopt(argv,"h:i:o:n:y:x",["ifile=","ofile=","ntype=","oiqfile","niqfile="])
     except getopt.GetoptError:
-        print 'file.py -i <inputfile> -f <caption on graph> -n <noisefile>'
+        print 'file.py -i <inputfile> -n <noise stats> -o <ones stats> -x <noise iq file> -y <ones iq file>'
         sys.exit(2)
     for opt, arg in opts:
         print opt ,arg,
         if opt == '-h':
-            print 'file.py -i <inputfile> -f <caption on graph>  -n <noisefile>'
+            print 'file.py -i <inputfile> -n <noise stats> -o<ones stats> -x <noise iq file> -y <ones iq file>'
             sys.exit()
         elif opt in ("-i", "--ifile"):
             inputfile = arg
         elif opt in ("-n", "--nfile"):
             noisefile = arg
-            noiseflag =1
-        elif opt in ("-f", "--ftype"):
-            ftype = arg
+            noiseflag1=1
+        elif opt in ("-o", "--ofile"):
+            onesfile = arg
+            onesflag1=1
+        elif opt in ("-y", "--oiqfile"):
+            oiq_file = arg
+            onesflag=1
+        elif opt in ("-x", "--niqfile"):
+            niq_file = arg
+            noiseflag=1
         else:
             print "check help for usage" 
             sys.exit()
 
-    mag, mag_noise, avg_mag, avg_noise=[],[], [], []
-    data= scipy.fromfile(open(inputfile), dtype=scipy.complex64)
+    print " abhianv" 
+    print noiseflag , noiseflag1
+    assert(noiseflag==1 and noiseflag1==1), " Set all the files correctly for noise "
+    #assert(onesflag==1 and onesflag1 ==1), " Set all the files correctly for ones "
+
+    z_data= scipy.fromfile(open(inputfile), dtype=scipy.complex64)
     l=inputfile.split('_')
     print "\nthe elements are: ", l[-3][-2:], l[-1]
-    fname= '_'.join([l[-2],  l[-3][-2:] ,l[-1][:-4]])
+    fname= '_'.join([l[-3][-2:] , l[-2], l[-1][:-4]])
 
     print "filename is " , fname
-    for i in range(0,len(data)):
-        mag.append(np.absolute(data[i]))
-    avg_mag=movingaverage(mag ,10)
-    ps_rayleigh= calculate_rayleigh(mag,'signal_rayleigh'+fname)
-    avg_ps_rayleigh= calculate_rayleigh(avg_mag,'avg_signal_rayleigh'+fname)
+    
+    fig1 = Figure(linewidth=0.0)
+    fig1.set_size_inches(fig_width,fig_length, forward=True)
+    Figure.subplots_adjust(fig1, left = fig_left, right = fig_right, bottom =
+    fig_bottom, top = fig_top, hspace = fig_hspace)
+    _subplot = fig1.add_subplot(1,1,1)
 
-    mag= mag
-    avg_mag=avg_mag
-    print "Signal: rayleigh distribution parameters: expected= ", ps_rayleigh[0], "scale is ", ps_rayleigh[1]
-    print "Avg Signal: rayleigh distribution parameters: expected= ", ps_rayleigh[0], "scale is ", ps_rayleigh[1]
+    data=map(np.absolute,z_data)
+    data_hist, data_bins= np.histogram(data,200,density=1)
+    [data_exp_param, data_pdf_exp_fitted, data_rayleigh_param, data_pdf_rayleigh_fitted] = approximating_dists(data,data_bins)
+    print "Entropy of transmission ", kl_divergence(data_pdf_rayleigh_fitted)
+    print "data exp param ",data_exp_param, "data rayleigh param ", data_rayleigh_param
+    _subplot.hist(data,200,facecolor='red', alpha=0.6, normed=1, label= 'data')
+    _subplot.plot(data_bins,data_pdf_rayleigh_fitted,'r-',label='data estimate rayleigh')
+    _subplot.plot(data_bins,data_pdf_exp_fitted,'r^', label='data estimate exp')
 
-    ps_exponential= calculate_exponential(mag,'signal_exponential'+fname)
-    avg_ps_exponential= calculate_exponential(avg_mag,'avg_signal_exponential'+fname)
-    print "Signal: exponential distribution parameters: expected= ", ps_exponential[0], "scale is ",ps_exponential[1]
-    print "Avg Signal: exponential distribution parameters: expected= ",avg_ps_exponential[0], "scale is ",avg_ps_exponential[1]
+    if noiseflag==1 and noiseflag==1:
+        z_noise= scipy.fromfile(open(niq_file), dtype=scipy.complex64)
+        noise =map(np.absolute,z_noise)
+        noise_hist, noise_bins= np.histogram(noise,200,density=1)
+        _subplot.hist(noise,200,normed=1,alpha=0.5, facecolor='blue', label='noise')
 
-    try:
-        print "entropy of signal is= ", kl_distance(mag)
-    except:
-        print "dint get signal entropy "
+        [noise_exp_param, noise_pdf_exp_fitted, noise_rayleigh_param, noise_pdf_rayleigh_fitted]= pickle.load(open(noisefile, "rb" ))
+        _subplot.plot(noise_bins,noise_pdf_rayleigh_fitted,'b-', label='noise estimate rayleigh')
+        _subplot.plot(noise_bins,noise_pdf_exp_fitted,'b^', label='noise estimate exp')
+        print "Entropy of noise " , kl_divergence(noise_pdf_rayleigh_fitted)
+        print "KL Divergence of data wrt noise(rayleigh) ", kl_divergence(data_pdf_rayleigh_fitted, noise_pdf_rayleigh_fitted)
 
-    if noiseflag==1:
-        noise= scipy.fromfile(open(noisefile), dtype=scipy.complex64)
-        for i in range(0,len(noise)):
-            mag_noise.append(np.absolute(noise[i]))
-        avg_noise=movingaverage(mag_noise ,10)
-        mag_noise =mag_noise
-        avg_noise =avg_noise
-        print "For Noise" 
-        pn_rayleigh= calculate_rayleigh(mag_noise,'noise_rayleigh'+fname)
-        print "Noise: rayleigh distribution parameters: expected= ", pn_rayleigh[0], "var is ", pn_rayleigh[1]
-        avg_pn_rayleigh= calculate_rayleigh(avg_noise,'avg_noise_rayleigh'+fname)
-        print "Avg Noise: rayleigh distribution parameters: expected= ", avg_pn_rayleigh[0], "var is ", avg_pn_rayleigh[1]
+        print "\n modelled as exponential distribution "
+        error_calculation(noise_bins, data_exp_param[0], data_exp_param[1], noise_exp_param[0], noise_exp_param[1],0)
+        print "\n modelled as rayleigh distribution "
+        error_calculation(noise_bins, data_rayleigh_param[0], data_rayleigh_param[1], noise_rayleigh_param[0], noise_rayleigh_param[1],1)
 
-        pn_exponential= calculate_exponential(mag_noise,'noise_exponential'+fname)
-        print "Noise: exponential distribution parameters: expected= ", pn_exponential[0], "var ",pn_exponential[1]
+    if onesflag==1 and onesflag1==1:
+         z_ones= scipy.fromfile(open(oiq_file), dtype=scipy.complex64)
+         ones =map(np.absolute,z_ones)
+         ones_hist, ones_bins= np.histogram(ones,200,density=1)
+         _subplot.hist(ones,200,normed=1,alpha=0.8, facecolor='green', label='ones')
 
-        avg_pn_exponential= calculate_exponential(avg_noise,'noise_exponential'+fname)
-        print "Avg Noise: exponential distribution parameters: expected= ", avg_pn_exponential[0], "var ",avg_pn_exponential[1]
+         [ones_exp_param, ones_pdf_exp_fitted, ones_rayleigh_param, ones_pdf_rayleigh_fitted] = pickle.load(open(onesfile, "rb" ))
+         _subplot.plot(ones_bins,ones_pdf_rayleigh_fitted,'g-', label='ones estimate rayleigh')
+         _subplot.plot(ones_bins,ones_pdf_exp_fitted,'g^', label='ones estimate exp')
 
-        
-        try:
-            print "kl distance: Avg values of noise and signal is=  ", kl_distance(avg_mag,avg_noise)
-        except:
-            print " dint get the avg signal kl divergence wrt avg noise "
-            
-        try:
-            print "entropy of Noise is= ", kl_distance(mag_noise)
-        except:
-            print " dint get noise entropy " 
 
-        min_length = min(len(mag_noise), len(mag))
-        print " modelled as exponential distribution " 
-        error_calculation(min_length, ps_exponential[0], ps_exponential[1], pn_exponential[0], pn_exponential[1],0)
-        print "\n \n modelled as rayleigh distribution " 
-        error_calculation(min_length, ps_rayleigh[0], ps_rayleigh[1], pn_rayleigh[0], pn_rayleigh[1],1)
+    _subplot.legend()
+    canvas = FigureCanvasAgg(fig1)
+    canvas.print_figure(fname+'.pdf', dpi = 110)
+
 
 if __name__=='__main__':
     print "in main"

@@ -1,6 +1,13 @@
 import scipy, sys, getopt, pickle
 from scipy.stats import norm,rayleigh, expon, entropy
 import numpy as np
+
+
+
+def movingaverage(interval, window_size=512):
+    window = np.ones(int(window_size))/float(window_size)
+    return np.convolve(interval, window, 'same')
+
 def distribution_statistic(data,bins):
     try :
         rayleigh_param = rayleigh.fit(data)
@@ -51,7 +58,6 @@ def main(argv):
         else:
             print "check help for usage" 
             sys.exit()
-    print "before pmode "        
     if pmode ==1:
         nl=noisefile.split('_')
         Noisepickle= '_'.join([ nl[-4][-5:], nl[-3][-2:], nl[-2], nl[-1][:-4]])    
@@ -73,7 +79,6 @@ def main(argv):
         print "Done with Pickle mode "
         sys.exit(1)
 
-    print " ahead of pmode "
     false_positives, false_negatives=0,0
     
     if noiseflag ==1:
