@@ -105,7 +105,7 @@ def main(argv):
     noiseflag, onesflag, noiseflag1, onesflag1=0,0,0,0
     print " main "
     try:
-        opts, args = getopt.getopt(argv,"h:i:o:n:y:x",["ifile=","ofile=","ntype=","oiqfile","niqfile="])
+        opts, args = getopt.getopt(argv,"h:i:o:n:y:x::",["ifile=","ofile=","ntype=","oiqfile","niqfile="])
     except getopt.GetoptError:
         print 'file.py -i <inputfile> -n <noise stats> -o <ones stats> -x <noise iq file> -y <ones iq file>'
         sys.exit(2)
@@ -132,8 +132,6 @@ def main(argv):
             print "check help for usage" 
             sys.exit()
 
-    print " abhianv" 
-    print noiseflag , noiseflag1
     assert(noiseflag==1 and noiseflag1==1), " Set all the files correctly for noise "
     #assert(onesflag==1 and onesflag1 ==1), " Set all the files correctly for ones "
 
@@ -158,7 +156,7 @@ def main(argv):
     _subplot.hist(data,200,facecolor='red', alpha=0.6, normed=1, label= 'data')
     _subplot.plot(data_bins,data_pdf_rayleigh_fitted,'r-',label='data estimate rayleigh')
     _subplot.plot(data_bins,data_pdf_exp_fitted,'r^', label='data estimate exp')
-
+    
     if noiseflag==1 and noiseflag==1:
         z_noise= scipy.fromfile(open(niq_file), dtype=scipy.complex64)
         noise =map(np.absolute,z_noise)
