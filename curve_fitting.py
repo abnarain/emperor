@@ -2,11 +2,13 @@ import matplotlib
 # Force matplotlib to not use any Xwindows backend.
 matplotlib.use('Agg')
 from scipy.stats import norm,rayleigh, expon, entropy
+from scipy.optimize import curve_fit
 import sys, scipy, getopt
 import matplotlib.font_manager
 import numpy as np
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
+
 
 from matplotlib import pyplot
 from sklearn.metrics import mean_squared_error
@@ -25,9 +27,6 @@ column,row=1,1
 def movingaverage(interval, window_size):
     window = np.ones(int(window_size))/float(window_size)
     return np.convolve(interval, window, 'same')
-
-fitfunc  = lambda p, x: p[0]*exp(-0.5*((x-p[1])/p[2])**2)+p[3]
-errfunc  = lambda p, x, y: (y - fitfunc(p, x))
 
 # You can compare the log likelihood distance of distributions
 # You can compare the mean == That is the expectation of the value (E[nn*])
@@ -60,15 +59,23 @@ def kl_distance(pk,qk=None):
         return entropy(pk, qk)
 
 
-def curve_fitting_exp(x,a,b,c):
+def curve_fitting_exp(data):
+    n, bins= np.histogram(data,200,density=1)
+    xdata =bins[0:len(n)]
+    ydata=n
+    def fitfuncRayleigh (x, a,b,c,d):
+        return x*a/(b**2)*exp(-0.5*((x-c)/b)**2)+d
+
+    def fitfuncGaussian(x,a,b,c,d)
+        return a*exp(-0.5*((x-b)/a)**2)+d
+
+    def fitfuncExp (x,a,b,c,d)
+        return  a*exp((x-b)*a)+c 
+
     def func(x, a, b, c):
         return a * np.exp(-b * x) + c
 
-    x = np.linspace(0,4,50)
-    y = func(x, 2.5, 1.3, 0.5)
-    yn = y + 0.2*np.random.normal(size=len(x))
-
-    popt, pcov = curve_fit(func, x, yn)
+    popt, pcov = curve_fit(func, xdata, ydata)
     return popt
 
 def calculate_exponential(data,outfile_name):
@@ -93,7 +100,7 @@ def calculate_exponential(data,outfile_name):
     return param
 
 def calculate_rayleigh(data,outfile_name):
-    n, bins=  np.histogram(data,density=1) 
+    n, bins=  np.histogram(data,density=1)
     fig1 = Figure(linewidth=0.0)
     fig1.set_size_inches(fig_width,fig_length, forward=True)
     Figure.subplots_adjust(fig1, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
