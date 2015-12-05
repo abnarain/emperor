@@ -40,12 +40,12 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv,"h:n:o:p:",["nfile=","ofile=","pmode="])
     except getopt.GetoptError:
-        print 'file.py -i <noisefile> -o <onesfile>'
+        print 'file.py -i <noisefile> -o <onesfile> -p <mode on/off>'
         sys.exit(2)
     for opt, arg in opts:
         print opt ,arg,
         if opt == '-h':
-            print 'file.py -n <noisefile> -o <onesfile> '
+            print 'file.py -n <noisefile> -o <onesfile>  -p <mode on/off>'
             sys.exit()
         elif opt in ("-n", "--nfile"):
             noisefile = arg
@@ -59,17 +59,19 @@ def main(argv):
             print "check help for usage" 
             sys.exit()
     if pmode ==1:
-        nl=noisefile.split('_')
-        Noisepickle= '_'.join([ nl[-4][-5:], nl[-3][-2:], nl[-2], nl[-1][:-4]])    
-        ol=onesfile.split('_')
-        Onespickle= '_'.join([ ol[-4][-4:], ol[-3][-2:], ol[-2], ol[-1][:-4]])
         if noiseflag ==1:
+            nl=noisefile.split('_')
+            Noisepickle= '_'.join([ nl[-4][-5:], nl[-3][-2:], nl[-2], nl[-1][:-4]])
+            print " In noise caliberation "
             z_noise= scipy.fromfile(open(noisefile), dtype=scipy.complex64)
             noise=map(np.absolute,z_noise)
             noise_hist, noise_bins= np.histogram(noise,200,density=1)
             [noise_exp_param, noise_pdf_exp_fitted, noise_rayleigh_param, noise_pdf_rayleigh_fitted] = distribution_statistic(noise, noise_bins)
             pickle.dump([noise_exp_param, noise_pdf_exp_fitted, noise_rayleigh_param, noise_pdf_rayleigh_fitted], open(Noisepickle+'.pickle','wb'))
         if onesflag ==1:
+            print "in ones caliberation "
+            ol=onesfile.split('_')        
+            Onespickle= '_'.join([ ol[-4][-4:], ol[-3][-2:], ol[-2], ol[-1][:-4]])
             z_ones= scipy.fromfile(open(onesfile), dtype=scipy.complex64)
             ones=map(np.absolute,z_ones)
             ones_hist, ones_bins= np.histogram(ones,200,density=1)
@@ -91,10 +93,21 @@ def main(argv):
     if onesflag==1:
         print "Training caliberation "
         ones= scipy.fromfile(open(onesfile), dtype=scipy.float32)
-        for i in range(0,len(ones)):
-            if ones[i] == 0.0 :
-                false_negatives += 1
-        print "\nfalse negatives ",false_negatives, len(ones), false_negatives*1.0/len(ones)
+        set_flag,i=0,0
+        while (i<len(ones)):
+            if ones[i] == 0.0 and ones[i+1]==1.0 :
+                break
+            i+=1
+        cum=0        
+        while (i<len(ones)):
+            cum +=1
+            if ones[i]==0.0 and ones[i+1]==1.0 :
+                None
+            else:    
+                false_negatives += 1              
+            i+=2
+
+        print "\nfalse negatives ",false_negatives, cum, false_negatives*1.0/cum
 
 if __name__=='__main__':
     main(sys.argv[1:])

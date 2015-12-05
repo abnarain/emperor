@@ -26,7 +26,7 @@ def ber_repetition(oracle_indices,to_decode_data):
         idx=tup[0].astype(np.int64)
         if tup[1]==111:
             xored_data.append(int(to_decode_data[idx]) ^ int(original_message[idx]))
-            if original_message[i] == 1 and  to_decode_data[i] == 0 :
+            if original_message[idx] == 1 and  to_decode_data[idx] == 0 :
                 false_negatives += 1
         elif tup[1] ==000:
             if original_message[i] == 0 and  to_decode_data[i] == 1 :
@@ -47,7 +47,7 @@ def ber_single(oracle_indices,to_decode_data, original_message):
     for i in range(0,len(ppm)):
         tup=ppm[i]
         idx=tup[0].astype(np.int64)
-        print " idx = ", idx,
+        #print " idx = ", idx,
         if tup[1]==100:
             xored_data.append(int(to_decode_data[idx]) ^ int(original_message[idx]))
             if original_message[idx] == 1 and  to_decode_data[idx] == 0 :
@@ -72,38 +72,6 @@ def start_index(to_decode_file):
             break
     print "value of the mean index is ", min_index_of_max
     return min_index_of_max
-
-def decoding_maj2(oracle_indices,to_decode_data):
-    ppm= oracle_indices
-    rs_decoder_input=[]
-    print "length of total received array is " , len(to_decode_data), "original length of transmissions", len(oracle_indices)
-    for i in range(0,len(ppm)):
-        tup=ppm[i]
-        idx=tup[0].astype(np.int64)
-        try :
-            d=to_decode_data[idx]
-        except:
-            print "index is", idx , len(ppm), i
-            break
-        if ((to_decode_data[idx ]==1 and to_decode_data[idx+1]==1) or (to_decode_data[idx ]==1 and to_decode_data[idx+1]==0)or  (to_decode_data[idx ]==0 and to_decode_data[idx+1]==1 )) :
-            rs_decoder_input.append('1')
-        elif (to_decode_data[idx ]==0 and to_decode_data[idx+1] ==0 )  :
-            rs_decoder_input.append('0') 
-        else:
-           print "donno"
-
-    print len(rs_decoder_input)*1.0/8 , " this must be a number"
-    rs_feed=''.join(rs_decoder_input)
-    bin_rep_to_decode = bytearray()
-    print "length of rs feed is ",len(rs_feed)
-    #print "rs feed string is " ,rs_feed
-    for i in range(0,len(rs_feed),8):
-        x= rs_feed[i:i+8]
-        sx=struct.pack('B',int(x,2))
-        #print "x: ",x ," ",
-        print chr(ord(sx)),
-        bin_rep_to_decode.extend(sx)
-    return bin_rep_to_decode
 
 
 def decoding_maj3(oracle_indices,to_decode_data):
