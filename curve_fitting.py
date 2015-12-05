@@ -137,9 +137,9 @@ def main(argv):
 
     z_data= scipy.fromfile(open(inputfile), dtype=scipy.complex64)
     l=inputfile.split('_')
-    print "\nthe elements are: ", l[-3][-2:], l[-1]
-    fname= '_'.join([l[-3][-2:] , l[-2], l[-1][:-4]])
-
+    print "\nl is ", l
+    print "\nthe elements are: ", l[-3][-2:], l[-2], l[-1]
+    fname= '_'.join(['curve',l[-4][-2:], l[-3][-2:] , l[-2], l[-1][:-4]])
     print "filename is " , fname
     
     fig1 = Figure(linewidth=0.0)
