@@ -155,7 +155,7 @@ def main(argv):
     print "data exp param ",data_exp_param, "data rayleigh param ", data_rayleigh_param
     _subplot.hist(data,200,facecolor='red', alpha=0.6, normed=1, label= 'data')
     _subplot.plot(data_bins,data_pdf_rayleigh_fitted,'r-',label='data estimate rayleigh')
-    _subplot.plot(data_bins,data_pdf_exp_fitted,'r^', label='data estimate exp')
+    #_subplot.plot(data_bins,data_pdf_exp_fitted,'r^', label='data estimate exp')
     
     if noiseflag==1 and noiseflag==1:
         z_noise= scipy.fromfile(open(niq_file), dtype=scipy.complex64)
@@ -165,14 +165,17 @@ def main(argv):
 
         [noise_exp_param, noise_pdf_exp_fitted, noise_rayleigh_param, noise_pdf_rayleigh_fitted]= pickle.load(open(noisefile, "rb" ))
         _subplot.plot(noise_bins,noise_pdf_rayleigh_fitted,'b-', label='noise estimate rayleigh')
-        _subplot.plot(noise_bins,noise_pdf_exp_fitted,'b^', label='noise estimate exp')
+        #_subplot.plot(noise_bins,noise_pdf_exp_fitted,'b^', label='noise estimate exp')
         print "Entropy of noise " , kl_distance(noise_pdf_rayleigh_fitted)
         print "KL Divergence of data wrt noise(rayleigh) ", kl_distance(data_pdf_rayleigh_fitted, noise_pdf_rayleigh_fitted)
 
-        print "\n modelled as exponential distribution "
-        error_calculation(noise_bins, data_exp_param[0], data_exp_param[1], noise_exp_param[0], noise_exp_param[1],0)
+        #print "\n modelled as exponential distribution "
+        #error_calculation(data_bins, data_exp_param[0], data_exp_param[1], noise_exp_param[0], noise_exp_param[1],0)
         print "\n modelled as rayleigh distribution "
-        error_calculation(noise_bins, data_rayleigh_param[0], data_rayleigh_param[1], noise_rayleigh_param[0], noise_rayleigh_param[1],1)
+        error_calculation(data_bins, data_rayleigh_param[0], data_rayleigh_param[1], noise_rayleigh_param[0], noise_rayleigh_param[1],1)
+        print " Statistics:"
+        print " Data - ", data_rayleigh_param
+        print " Noise - ", noise_rayleigh_param
 
     if onesflag==1 and onesflag1==1:
          z_ones= scipy.fromfile(open(oiq_file), dtype=scipy.complex64)
@@ -182,7 +185,7 @@ def main(argv):
 
          [ones_exp_param, ones_pdf_exp_fitted, ones_rayleigh_param, ones_pdf_rayleigh_fitted] = pickle.load(open(onesfile, "rb" ))
          _subplot.plot(ones_bins,ones_pdf_rayleigh_fitted,'g-', label='ones estimate rayleigh')
-         _subplot.plot(ones_bins,ones_pdf_exp_fitted,'g^', label='ones estimate exp')
+         #_subplot.plot(ones_bins,ones_pdf_exp_fitted,'g^', label='ones estimate exp')        
 
     _subplot.legend()
     canvas = FigureCanvasAgg(fig1)
