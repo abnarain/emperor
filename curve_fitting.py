@@ -148,7 +148,7 @@ def main(argv):
     fig_bottom, top = fig_top, hspace = fig_hspace)
     _subplot = fig1.add_subplot(1,1,1)
 
-    data=map(np.absolute,z_data[:1000])
+    data=map(np.absolute,z_data)
     data_hist, data_bins= np.histogram(data,200,density=1)
     [data_exp_param, data_pdf_exp_fitted, data_rayleigh_param, data_pdf_rayleigh_fitted] = approximating_dists(data,data_bins)
     print "Entropy of transmission ", kl_distance(data_pdf_rayleigh_fitted)
@@ -159,7 +159,7 @@ def main(argv):
     
     if noiseflag==1 and noiseflag==1:
         z_noise= scipy.fromfile(open(niq_file), dtype=scipy.complex64)
-        noise =map(np.absolute,z_noise[:1000])
+        noise =map(np.absolute,z_noise)
         noise_hist, noise_bins= np.histogram(noise,200,density=1)
         _subplot.hist(noise,200,normed=1,alpha=0.5, facecolor='blue', label='noise')
 
@@ -179,7 +179,7 @@ def main(argv):
 
     if onesflag==1 and onesflag1==1:
          z_ones= scipy.fromfile(open(oiq_file), dtype=scipy.complex64)
-         ones =map(np.absolute,z_ones[:1000])
+         ones =map(np.absolute,z_ones)
          ones_hist, ones_bins= np.histogram(ones,200,density=1)
          _subplot.hist(ones,200,normed=1,alpha=0.8, facecolor='green', label='ones')
 
@@ -187,6 +187,7 @@ def main(argv):
          _subplot.plot(ones_bins,ones_pdf_rayleigh_fitted,'g-', label='ones estimate rayleigh')
          #_subplot.plot(ones_bins,ones_pdf_exp_fitted,'g^', label='ones estimate exp')        
 
+    #_subplot.set_xlim(0,0.002)
     _subplot.legend()
     canvas = FigureCanvasAgg(fig1)
     canvas.print_figure(fname+'.pdf', dpi = 110)
