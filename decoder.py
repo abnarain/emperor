@@ -16,7 +16,10 @@ fig_bottom = 0.25
 fig_top = 0.94
 fig_hspace = 0.5
 
-preamble= [1,0,1,0,1,1,0,0,1,1,0,1,1,1,0,1,1,0,1,0,0,1,0,0,1,1,1,0,0,0,1,0,1,1,1,1,0,0,1,0,1,0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,1,0,0,1,1,1,1]
+orig_preamble= [1,0,1,0,1,1,0,0,1,1,0,1,1,1,0,1,1,0,1,0,0,1,0,0,1,1,1,0,0,0,1,0,1,1,1,1,0,0,1,0,1,0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,1,0,0,1,1,1,1]
+preamble=[1,0,1,0,1,1,0,0,1,1,0,1,1,1,0,1,1,0,1,0,0,1,1,0,0,1,1,1,0,1,0,1]
+
+
 def ber_repetition(oracle_indices,to_decode_data):
     ppm= oracle_indices
     print "length of oracle indices/bits to transmit ", len(oracle_indices), "len of to_decode_data",len(to_decode_data)

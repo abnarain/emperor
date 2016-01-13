@@ -3,7 +3,10 @@ import random,binascii, sys,math
 import collections
 import numpy as np
 
-preamble= [1,0,1,0,1,1,0,0,1,1,0,1,1,1,0,1,1,0,1,0,0,1,0,0,1,1,1,0,0,0,1,0,1,1,1,1,0,0,1,0,1,0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,1,0,0,1,1,1,1]
+orig_preamble= [1,0,1,0,1,1,0,0,1,1,0,1,1,1,0,1,1,0,1,0,0,1,0,0,1,1,1,0,0,0,1,0,1,1,1,1,0,0,1,0,1,0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,1,1,1,1,1,1,0,0,1,1,1,1]
+preamble48=[1,0,1,0,1,1,0,0,1,1,0,1,1,1,0,1,1,0,1,0,0,1,0,0,1,1,1,0,0,1,0,1,0,1,1,0,1,1,0,0,1,0,1,0,0,0,1,1]
+preamble=[1,0,1,0,1,1,0,0,1,1,0,1,1,1,0,1,1,0,1,0,0,1,1,0,0,1,1,1,0,1,0,1]
+
 def convert(encoded_message):
     bit_representation_message=''
     for c in encoded_message:
@@ -23,6 +26,8 @@ def return_sample_messages(option):
         return b'I am going to use RS Encoder. There is basically so much to do that I cannot believe. We need to do as much we can how much we can and keep doing it unless we get success in it and that is how the world works. Lets do it...  We need to try out a bigger string to transmit and check how the decoder performs particularly with twice the size of the string that we started in the first try of scewing things up and hope things go well nasty well this time around even with a bigger string. This is a slightly bigger and mostly well done text because this will test the things of the RS code, the channel and the scheme in terms of the secrecy as the number of slots to spread the information bits will grow polynomially in terms of number of bits of input. This is also a penultimate vector to deal with unless we do things for even more killer long vector as the final one. There are plenty of experiments to be done right now after this basic step goes in of generating test vectors to transmit and receive over the powerline communication channel.'
     elif option ==5:
         return b'This is a good opportunitity to try to get transmission'    
+    elif option ==6:
+        return b'This is a good opportunity to try to do transmission, Master. Sith rule forever.'
     else:
         print "giving correct input"
         sys.exit(1)

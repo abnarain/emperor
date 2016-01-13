@@ -139,7 +139,7 @@ def main(argv):
     l=inputfile.split('_')
     print "\nl is ", l
     print "\nthe elements are: ", l[-3][-2:], l[-2], l[-1]
-    fname= '_'.join(['curve',l[-4][-2:], l[-3][-2:] , l[-2], l[-1][:-4]])
+    fname= '_'.join(['ncurve',l[-4][-2:], l[-3][-2:] , l[-2], l[-1][:-4]])
     print "filename is " , fname
     
     fig1 = Figure(linewidth=0.0)
@@ -187,7 +187,7 @@ def main(argv):
          _subplot.plot(ones_bins,ones_pdf_rayleigh_fitted,'g-', label='ones estimate rayleigh')
          #_subplot.plot(ones_bins,ones_pdf_exp_fitted,'g^', label='ones estimate exp')        
 
-    #_subplot.set_xlim(0,0.002)
+    _subplot.set_xlim(0,0.002)
     _subplot.legend()
     canvas = FigureCanvasAgg(fig1)
     canvas.print_figure(fname+'.pdf', dpi = 110)
