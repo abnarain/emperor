@@ -15,8 +15,7 @@ y1= norm.pdf(x,loc=-1)
 y2= norm.pdf(x,loc=1)
 ax.annotate('Threshold', xy=(.3, .4),  xycoords='data',
             xytext=(.4,.8), textcoords='axes fraction', arrowprops=dict(facecolor='black'),
-                                    horizontalalignment='right',verticalalignment='top', )
-
+            horizontalalignment='right',verticalalignment='top', )
 
 ax.plot(x, y1,'b-', lw=2,  label='True Noise Distribtion')
 ax.plot(x, y2,'r-', lw=2, label='Noise Distribution after Injection')
@@ -29,8 +28,8 @@ for i in range(0,len(x)):
         idx.append(i)
 #ax.text(2, 6, 'Threshold detector', fontsize=4)
 
-
-ax.fill_between(z,y1[idx[0]:idx[0]+len(idx)],0, facecolor='green', alpha=0.6 )
+#ax.fill_between(z,y1[idx[0]:idx[0]+len(idx)],0, facecolor='green', alpha=0.6 )
+ax.fill_between(z,y2[idx[0]:idx[0]+len(idx)],0, facecolor='green', alpha=0.6 )
 ax.fill_between(x,y1,0,x>.4 , facecolor='yellow', alpha=0.6, label='Prob. of False Positve')
 #ax.legend(loc='best', frameon=False)
 ax.set_xlabel(r'Weight of Amplitude of quadrature samples. wt$(y_{w})$')
