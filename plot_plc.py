@@ -1,6 +1,8 @@
 import scipy ,sys, getopt, math
 from scipy.fftpack import fft, fftfreq, fftshift
 from scipy import signal,arange
+import matplotlib
+matplotlib.use('Agg') # Force matplotlib to not use any Xwindows backend.
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -8,82 +10,114 @@ import matplotlib.font_manager
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_agg import FigureCanvasAgg
 
+
+#matplotlib.pyplot.tight_layout(pad=1.08, h_pad=1.08, w_pad=1.08, rect=1.08)
+# Can be used to adjust the border and spacing of the figure
 fig_width = 10
 fig_length = 10.25
-# Can be used to adjust the border and spacing of the figure
 fig_left = 0.12
 fig_right = 0.94
 fig_bottom = 0.25
 fig_top = 0.94
 fig_hspace = 0.5
 
+from scipy.signal import butter, lfilter, freqz
+def butter_lowpass(cutoff, fs, order=5):
+    nyq = 0.5 * fs
+    normal_cutoff = cutoff / nyq
+    b, a = butter(order, normal_cutoff, btype='low', analog=False)
+    return b, a
+
+def butter_lowpass_filter(data, cutoff, fs, order=5):
+    b, a = butter_lowpass(cutoff, fs, order=order)
+    y = lfilter(b, a, data)
+    return y
+
 def movingaverage(interval, window_size):
     window = np.ones(int(window_size))/float(window_size)
     return np.convolve(interval, window, 'same')
 
 
-def give_subplot():
-    fig = Figure(linewidth=0.0)
-    fig.set_size_inches(fig_width,fig_length, forward=True)
-    Figure.subplots_adjust(fig, left = fig_left, right = fig_right, bottom = fig_bottom, top = fig_top, hspace = fig_hspace)
-    return fig
-
-def test_stationarity():
-    import statsmodels.api as sm
-    test = sm.tsa.adfuller(mag)
-    print 'adf: ', test[0]
-    print 'p-value: ', test[1]
-    print'Critical values: ', test[4]
-    if test[0]> test[4]['5%']:
-        print "this is stationary"
-    else:
-        print "not stationary "
-
 def filereader(filename): 
     z= scipy.fromfile(open(filename), dtype=scipy.complex64)
     # dtype with scipy.int16, scipy.int32, scipy.float32, scipy.complex64 or whatever type you were using.
-    #z=z[0:1000]
-    N=len(z)
     mag, phase,x,y = [], [], [], []
     for i in range(0, len(z)):
         mag.append(np.absolute(z[i]))
         x.append(z[i].real)
         y.append(z[i].imag)
         phase.append(np.angle(z[i]))
-    return [x,y,mag, phase,z, N]
+    return [x,y,mag, phase,z]
 
-def plot_acf_pacf(mag,filename):
-    import statsmodels.api as sm
-    fig = pyplot.figure(figsize=(12,8))
-    ax1 = fig.add_subplot(211)
-    fig = sm.graphics.tsa.plot_acf(mag, lags=2000, ax=ax1)
-    ax2 = fig.add_subplot(212)
-    fig = sm.graphics.tsa.plot_pacf(mag, lags=2005, ax=ax2)
-    pyplot.savefig('acf_pacf_2000'+post+'.pdf')
+def plot_psd(data,fs,filename,flag, clipped):
+    # Estimate PSD using Welchs method. Divides the data into overlapping segments, 
+    #computing a modified periodogram for each segment and overlapping the periodograms
+    plt.figure(figsize=(10,10))
+    fig, ax0 = plt.subplots(nrows=1)
+    f, Pxx_den = signal.periodogram(data, fs)
+    ax0.set_xlabel('frequency [Hz]')
+    ax0.set_ylabel('periodogram')
+    ax0.plot(f, Pxx_den)
+    if flag==1:
+       ax0.set_yscale('log')
+       ax0.set_ylabel('periodogram (log scale)')
+        filename= filename+'_log'
+    if clipped :
+        ax0.set_xlim(-125*1000, 125*1000)
+        filename=filename+'_clipped'
+    plt.savefig(filename+'.pdf')
 
-def hurst(ts):
-    from numpy import cumsum, log, polyfit, sqrt, std, subtract
-    """Returns the Hurst Exponent of the time series vector ts"""
-    # Create the range of lag values
-    lags = range(2, 20000)
-    # Calculate the array of the variances of the lagged differences
-    tau = [sqrt(std(subtract(ts[lag:], ts[:-lag]))) for lag in lags]
-    # Use a linear fit to estimate the Hurst Exponent
-    poly = polyfit(log(lags), log(tau), 1)
+def plot_complex_fft(x, fs, filename, flag, clipped):
+    from scipy.fftpack import fft, fftfreq, fftshift
+    N=len(x)
+    plt.figure(figsize=(10,10))
+    fig, ax0 = plt.subplots(nrows=1)
+    freqs = fftfreq(N, 1.0/fs)
+    freqs = fftshift(freqs)
+    yf= 1.0/N *fft(x)
+    yf = fftshift(yf)
+    ax0.plot(freqs,  np.abs(yf))
+    #print "freqs is ", freqs
+    #print "FFT vals are",  np.abs(yf)
+    ax0.set_xlabel('frequency')
+    ax0.set_ylabel('magnitude')
+    if flag==1:
+        ax0.set_yscale('log')
+        ax0.set_ylabel('magnitude (log)')
+        filename= filename+'_log'
+    if clipped==1 :
+        ax0.set_xlim(-125*1000, 125*1000)
+        filename=filename+'_clipped'
+    plt.savefig(filename+'.pdf',dpi = 110)
 
-    # Return the Hurst exponent from the polyfit output
-    #Create a Gometric Brownian Motion, Mean-Reverting and Trending Series
-    #gbm = log(cumsum(randn(100000))+1000)
-    #mr = log(randn(100000)+1000)
-    #tr = log(cumsum(randn(100000)+1)+1000)
-    return poly[0]*2.0
-
+def plot_spectrograms(x, fs, filename,nfft,clipped):
+    #from matplotlib.colors import BoundaryNorm
+    #from matplotlib.ticker import MaxNLocator
+    # pick the desired colormap, sensible levels, and define a normalization
+    # instance which takes data values and translates those into levels.
+    #cmap = plt.get_cmap('PiYG')
+    #norm = BoundaryNorm(levels, ncolors=cmap.N, clip=True)
+    #im = ax0.pcolormesh(x, y, z, cmap=cmap, norm=norm)
+    #fig.colorbar(im, ax=ax0)
+    plt.figure(figsize=(30,15))
+    fig, ax1 = plt.subplots(nrows=1)
+    from matplotlib import pylab
+    Pxx, freqs, time, im = ax1.specgram(x, NFFT=nfft,  Fs=fs, detrend=pylab.detrend_none,
+        window=pylab.window_hanning, noverlap=int(nfft * 0.025))
+    #ax1.set_xlim(0,1)
+    ax1.set_title('specgram spectgm'+'NFFT= %d'%nfft)
+    fig.colorbar(im, ax=ax1).set_label("Amplitude (dB)")
+    #ax3.axis('tight')
+    if clipped :
+        ax1.set_ylim(-125*1000,125*1000)
+        filename=filename+'_clipped'
+    plt.savefig(filename+'.pdf')
 
 
 def main(argv):
     inputfile=''
     noisefile=''
-    noiseflag=0
+    noiseflag,inputflag=0,0
     try:
         opts, args = getopt.getopt(argv,"h:i:n:",["ifile=","nfile="])
     except getopt.GetoptError:
@@ -96,6 +130,7 @@ def main(argv):
             sys.exit()
         elif opt in ("-i", "--ifile"):
             inputfile = arg
+            inputflag=1
         elif opt in ("-n", "--nfile"):
             noisefile = arg
             noiseflag=1
@@ -103,36 +138,47 @@ def main(argv):
             print "check help for usage" 
             sys.exit()
 
-    mag=[]
     
-    [x,y, mag, phase,z, Ns] = filereader(inputfile)
+    [x,y, mag, phase,z] = filereader(inputfile)
     del x, y, phase
-    l=inputfile.split('_')
-    print "\nthe elements are: ", l
-    filename= '_'.join([ l[1][-4:] ,l[2],l[3]])
-    print "input file is",inputfile
-    print "length of f is ", len(mag)
-    fs=1* math.pow(10,6)
+    file1='apr16_code_pf_2MHz'
+    fs=2.0* 10**6
     flag=1
-    print "sampling frequency is ",fs
-    '''
-    plot_hist(mag,filename+'hist_1250')
-    plotSpectrum(z,fs,filename+'_fft',flag)
-    plot_perdiodogram(z,fs,filename+'_periodogram',flag)
-    plot_complex_fft(z, fs, Ns, filename+'_cc_fft', flag)
-    print "Hurst(data's magnitude)index of :   %s" % hurst(mag)
-    #plot_welch_spectral_density(z,fs,filename+'_welch_psd',flag) #averaged
-    '''
-    if noiseflag==1:
-        [xn,yn,magn,phasen,zn,Nsn]=filereader(noisefile)
-        '''
-        plot_hist(magn,filename+'hist_noise_1250')
-        plotSpectrum(magn,fs,filename+'noise_fft',flag)
-        plot_perdiodogram(zn,fs,filename+'noise_periodogram',flag)
-        plot_complex_fft(zn, fs, Nsn, filename+'noise_cc_fft', flag)
-        plot_hists2(mag,magn, filename+'noise_data_',xlabel='amplitude',ylabel='counts')
-        '''
 
+    '''
+    plt.plot(mag[:500000],'b-')
+    plt.savefig('april10_nil_time.pdf')
+    sys.exit(1)
+    '''
+
+    '''
+    order = 6
+    cutoff = 100000  # desired cutoff frequency of the filter, Hz
+    # Get the filter coefficients so we can check its frequency response.
+    b, a = butter_lowpass(cutoff, fs, order)
+
+    # Plot the frequency response.
+    w, h = freqz(b, a, worN=8000)
+    mag = butter_lowpass_filter(mag, cutoff, fs, order)
+    '''
+
+    if inputflag==1:
+        print "length of f is ", len(mag)
+        #plot_spectrograms(z, fs, file1+'_cspecg_131072',131072,1)
+        print "spectrogram for i"
+        plot_complex_fft(z, fs, file1+'_cc_fft_131072',1,1)
+        plot_psd(z, fs, file1+'_psd_131072',1,1)
+        del z
+    
+    if noiseflag==1:
+        [xn,yn,magn,phasen,zn]=filereader(noisefile)
+        del xn, yn, phasen
+        #magn = butter_lowpass_filter(magn, cutoff, fs, order)
+        #print "length of mag is ", len(magn)
+        #plot_spectrograms(zn, fs,file2+'_cspecg_131072',131072,1)
+        print "spectrogram for n"
+        plot_complex_fft(zn, fs, file2+'_cc_fft_131072', 1,1)
+        plot_psd(zn,fs, file2+'_psd_131072', 1,1)
 
 if __name__=='__main__':
     main(sys.argv[1:])
