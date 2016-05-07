@@ -1,0 +1,9 @@
+Controlled experiments with Isolation Transformer:
+Blasted with a stream of {1,0} real signal
+Filename:
+m - Spectrogram with just magnitude of complex signals.
+c - complex spectrogram 
+
+
+I have set the center frequency to be 200 KHz,
+Sample rate = 50 kHz, meaning our transmission bandwidth is 50kHz

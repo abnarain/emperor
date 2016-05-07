@@ -1,0 +1,11 @@
+Controlled experiments with Isolation Transformer:
+There is CFL bulb on the channel - noise_xx_y_<m,c>spg.pdf
+There is CFL + covert communication on the channel - msg61_xx_y_<m,c>spg.pdf
+
+Filename:
+m - Spectrogram with just magnitude of complex signals.
+c - complex spectrogram 
+
+
+I have set the center frequency to be 200 KHz,
+Sample rate = 50 kHz, meaning our transmission bandwidth is 50kHz
