@@ -8,36 +8,41 @@ preamble48=[1,0,1,0,1,1,0,0,1,1,0,1,1,1,0,1,1,0,1,0,0,1,0,0,1,1,1,0,0,1,0,1,0,1,
 preamble=[1,0,1,0,1,1,0,0,1,1,0,1,1,1,0,1,1,0,1,0,0,1,1,0,0,1,1,1,0,1,0,1]
 
 def convert(encoded_message):
-    bit_representation_message=''
+    bit_rep_of_msg=''
     for c in encoded_message:
         cc= bin(c)[2:].zfill(8)
-        bit_representation_message+=bin(c)[2:].zfill(8)
-    print "length of bit representation of encoded message is ", len(bit_representation_message)
-    return bit_representation_message
+        bit_rep_of_msg+=bin(c)[2:].zfill(8)
+    print "length of bit representation of encoded message is ", len(bit_rep_of_msg)
+    return bit_rep_of_msg
 
 def return_sample_messages(option):
     if option ==1:
         return b'Abhinav Narain is good'
     elif option ==2:
         return b'I am going to use RS Encoder. There is basically so much to do that I cannot believe. We need to do as much we can how much we can and keep doing it unless we get success in it and that is how the world works. Lets do it...'
-    elif option ==3:
-        return b'I am going to use RS Encoder. There is basically so much to do that I cannot believe. We need to do as much we can how much we can and keep doing it unless we get success in it and that is how the world works. Lets do it...  We need to try out a bigger string to transmit and check how the decoder performs particularly with twice the size of the string that we started in the first try of scewing things up and hope things go well nasty well this time around even with a bigger string.'
-    elif option ==4:
-        return b'I am going to use RS Encoder. There is basically so much to do that I cannot believe. We need to do as much we can how much we can and keep doing it unless we get success in it and that is how the world works. Lets do it...  We need to try out a bigger string to transmit and check how the decoder performs particularly with twice the size of the string that we started in the first try of scewing things up and hope things go well nasty well this time around even with a bigger string. This is a slightly bigger and mostly well done text because this will test the things of the RS code, the channel and the scheme in terms of the secrecy as the number of slots to spread the information bits will grow polynomially in terms of number of bits of input. This is also a penultimate vector to deal with unless we do things for even more killer long vector as the final one. There are plenty of experiments to be done right now after this basic step goes in of generating test vectors to transmit and receive over the powerline communication channel.'
+    elif option ==3: #400
+        return b'I am going to use RS Encoder. There is basically so much to do that I cannot believe. We need to do as much we can how much we can and keep doing it unless we get success in it and that is how the world works. Lets do it...  We need to try out a bigger string to transmit and check how the decoder performs particularly with twice the size of the string that we started in the first trial or not'
+    elif option ==4: #800
+        return b'I am going to use RS Encoder. There is basically so much to do that I cannot believe. We need to do as much we can how much we can and keep doing it unless we get success in it and that is how the world works. Lets do it... We need to try out a bigger string to transmit and check how the decoder performs particularly with twice the size of the string that we started in the first try of scewing things up and hope things go well nasty well this time around even with a bigger string. This is a slightly bigger and mostly well done text because this will test the things of the RS code, the channel and the scheme in terms of the secrecy as the number of slots to spread the information bits will grow polynomially in terms of number of bits of input. This is also a penultimate vector to deal with.' 
     elif option ==5:
         return b'This is a good opportunitity to try to get transmission'    
-    elif option ==6:
+    elif option ==6: #80 bytes
         return b'This is a good opportunity to try to do transmission, Master. Sith rule forever.'
+    elif option ==7: #25 bytes
+        return b'This is good opportunity.'
+    elif option ==8: #40
+        return b'This is good opportunity. We have to do something!'        
     else:
         print "giving correct input"
         sys.exit(1)
 
 
-def generate_postions(bit_representation_message):
+
+def generate_positions(bit_rep_of_msg,msg_len_on_wire):
     tx_indexes=[]
     tx_indexes.append(0)
-    for j in range(1,len(bit_representation_message)):
-        next_instance=random.randint(0,message_length_on_wire)
+    for j in range(1,len(bit_rep_of_msg)):
+        next_instance=random.randint(0,msg_len_on_wire)
         tx_indexes.append(int(next_instance))
     sorted_tx_indexes= sorted(tx_indexes)
     separated_tx=[]
@@ -63,19 +68,19 @@ def generate_postions(bit_representation_message):
     print "len of separated_tx= ", len(separated_tx)
     return separated_tx
 
-def singlepulse_modulation(message_length_on_wire,message_amp_representation, separated_tx,file_name):
-    tmp_len = max(message_length_on_wire, separated_tx[-1])
+def singlepulse_modulation(msg_len_on_wire,msg_amp_rep, separated_tx,file_name):
+    tmp_len = max(msg_len_on_wire, separated_tx[-1])
     #print separated_tx
     counter,counter_2,counter_3,counter_4  =0,0,0,0
     print "max len is: " ,tmp_len, "last slot", separated_tx[-1]
     new_indexes,tx_instances=[],[]
     j,index=0,0
     for i in range(0,tmp_len):
-        #print "starting ", message_amp_representation[index],index
+        #print "starting ", msg_amp_rep[index],index
         if i in separated_tx:
             counter +=1
             #print i,
-            if message_amp_representation[index]==1:
+            if msg_amp_rep[index]==1:
                 new_indexes.append([j,100])
                 tx_instances.append(1)
                 tx_instances.append(0)
@@ -83,7 +88,7 @@ def singlepulse_modulation(message_length_on_wire,message_amp_representation, se
                 j=j+3
                 counter_3 +=3
                 index = index+1
-            elif message_amp_representation[index]==0:
+            elif msg_amp_rep[index]==0:
                 new_indexes.append([j,000])
                 tx_instances.append(0)
                 tx_instances.append(0)
@@ -92,7 +97,7 @@ def singlepulse_modulation(message_length_on_wire,message_amp_representation, se
                 counter_4 +=3
                 index = index+1
             else:
-                print "This is impossible",message_amp_representation[index]
+                print "This is impossible",msg_amp_rep[index]
                 sys.exit(1)
         else:
             tx_instances.append(0)
@@ -115,19 +120,19 @@ def singlepulse_modulation(message_length_on_wire,message_amp_representation, se
     print "bit1  added due to #0s ",counter_4
 
 
-def am_modulation(message_length_on_wire,message_amp_representation, separated_tx,file_name):
-    tmp_len = max(message_length_on_wire, separated_tx[-1])
+def am_modulation(msg_len_on_wire,msg_amp_rep, separated_tx,file_name):
+    tmp_len = max(msg_len_on_wire, separated_tx[-1])
     #print separated_tx
     counter,counter_2,counter_3,counter_4  =0,0,0,0
     print "max len is: " ,tmp_len, "last slot", separated_tx[-1]
     new_indexes,tx_instances=[],[]
     j,index=0,0
     for i in range(0,tmp_len):
-        #print "starting ", message_amp_representation[index],index
+        #print "starting ", msg_amp_rep[index],index
         if i in separated_tx:
             counter +=1
             #print i,
-            if message_amp_representation[index]==1:
+            if msg_amp_rep[index]==1:
                 new_indexes.append([j,110])
                 tx_instances.append(1)
                 tx_instances.append(1)
@@ -135,7 +140,7 @@ def am_modulation(message_length_on_wire,message_amp_representation, separated_t
                 j=j+3
                 counter_3 +=3
                 index = index+1
-            elif message_amp_representation[index]==0:
+            elif msg_amp_rep[index]==0:
                 new_indexes.append([j,000])
                 tx_instances.append(0)
                 tx_instances.append(0)
@@ -144,7 +149,7 @@ def am_modulation(message_length_on_wire,message_amp_representation, separated_t
                 counter_4 +=3
                 index = index+1
             else:
-                print "This is impossible",message_amp_representation[index]
+                print "This is impossible",msg_amp_rep[index]
                 sys.exit(1)
         else:
             tx_instances.append(0)
@@ -166,19 +171,19 @@ def am_modulation(message_length_on_wire,message_amp_representation, separated_t
     print "bit1  added due to #0s ",counter_4
 
 
-def ppm_modulation(message_length_on_wire,message_amp_representation, separated_tx,file_name):
-    tmp_len = max(message_length_on_wire, separated_tx[-1])
+def ppm_modulation(msg_len_on_wire,msg_amp_rep, separated_tx,file_name):
+    tmp_len = max(msg_len_on_wire, separated_tx[-1])
     #print separated_tx
     counter,counter_2,counter_3,counter_4  =0,0,0,0
     print "max len is: " ,tmp_len, "last slot", separated_tx[-1]
     new_indexes,tx_instances=[],[]
     j,index=0,0
     for i in range(0,tmp_len):
-        #print "starting ", message_amp_representation[index],index
+        #print "starting ", msg_amp_rep[index],index
         if i in separated_tx:
             counter +=1
             #print i,
-            if message_amp_representation[index]==1:
+            if msg_amp_rep[index]==1:
                 new_indexes.append([j,111])
                 tx_instances.append(1)
                 tx_instances.append(1)
@@ -186,7 +191,7 @@ def ppm_modulation(message_length_on_wire,message_amp_representation, separated_
                 j=j+3
                 counter_3 +=3
                 index = index+1
-            elif message_amp_representation[index]==0:
+            elif msg_amp_rep[index]==0:
                 new_indexes.append([j,000])
                 tx_instances.append(0)
                 tx_instances.append(0)
@@ -195,7 +200,7 @@ def ppm_modulation(message_length_on_wire,message_amp_representation, separated_
                 counter_4 +=3
                 index = index+1
             else:
-                print "This is impossible",message_amp_representation[index]
+                print "This is impossible",msg_amp_rep[index]
                 sys.exit(1)
         else:
             tx_instances.append(0)
@@ -219,6 +224,36 @@ def ppm_modulation(message_length_on_wire,message_amp_representation, separated_
     print "bit1  added due to #0s ",counter_4
 
 
+def v1_message_creation(message_option):
+    '''
+    Uses the O() constant as 1
+    The only option used is 6 (as it is largest the sync can handle.)
+    '''
+    message_to_encode=return_sample_messages(int(message_option))
+    encoded_message= rs.encode(message_to_encode)
+    print "length of message is ", len(message_to_encode)
+    print "length of encoded message is ", len(encoded_message) 
+    bit_rep_of_msg=convert(encoded_message)
+    assert len(bit_rep_of_msg)*1.0/len(encoded_message) ==8.0
+    #this is for finding out which bits were flipped in above corruption
+    msg_len_on_wire= len(bit_rep_of_msg)*len(bit_rep_of_msg)
+    print "length of bit representation ", len(bit_rep_of_msg), "message slots on wire(square) ", msg_len_on_wire
+    separated_tx=generate_positions(bit_rep_of_msg,msg_len_on_wire)
+    return [msg_len_on_wire,separated_tx, bit_rep_of_msg]
+
+def v2_message_creation(message_option):
+    '''
+    This version will increase the constant in front of O() notation to cram
+    more bits to look at the resulting covertness offered.
+    '''
+    message_to_encode=return_sample_messages(int(message_option))
+    encoded_message=rs.encode(message_to_encode)
+    bit_rep_of_msg=convert(encoded_message)
+    assert len(bit_rep_of_msg)*1.0/len(encoded_message) ==8.0
+    msg_len_on_wire = ((80+32)*8)**2
+    separated_tx=generate_positions(bit_rep_of_msg, msg_len_on_wire)
+    return [msg_len_on_wire, separated_tx, bit_rep_of_msg]
+
 if __name__=='__main__':
     if len(sys.argv) <2:
         print "Usage: message_..py <fileName> <messageOption> <BitRepetition> \n"
@@ -231,28 +266,22 @@ if __name__=='__main__':
     bit_repetition=sys.argv[3]
 
     rep= int(bit_repetition)
-    file_name=file_name+'_'+message_option+'_'+bit_repetition
-    message_to_encode=return_sample_messages(int(message_option))
-    encoded_message= rs.encode(message_to_encode)
-    print "length of message is ", len(message_to_encode), "length of encoded message is ", len(encoded_message) 
-    bit_representation_message=convert(encoded_message)
-    assert len(bit_representation_message)*1.0/len(encoded_message) ==8.0
-    #this is for finding out which bits were flipped in above corruption
-    message_length_on_wire= len(bit_representation_message)*len(bit_representation_message)
-    print "length of bit representation ", len(bit_representation_message), "message slots on wire(square) ", message_length_on_wire
+    file_name=file_name+'_v'+message_option+'_'+bit_repetition
 
-    separated_tx=generate_postions(bit_representation_message)
+    #[msg_len_on_wire,separated_tx,bit_rep_of_msg] =v1_message_creation(message_option)
+
+    [msg_len_on_wire,separated_tx,bit_rep_of_msg] = v2_message_creation(message_option)
 
     print "new seperated index ",len(separated_tx)
     print "duplicates are ", [item for item, count in collections.Counter(separated_tx).items() if count > 1]
-    message_amp_representation= [int(i) for i in list(bit_representation_message)]
+    msg_amp_rep= [int(i) for i in list(bit_rep_of_msg)]
     
     #the function names are incorrect. They are all doing repetition coding of the single bit essentially
     if rep==3:
-        ppm_modulation(message_length_on_wire,message_amp_representation, separated_tx,file_name)
+        ppm_modulation(msg_len_on_wire,msg_amp_rep, separated_tx,file_name)
     elif rep==2:
-        am_modulation(message_length_on_wire,message_amp_representation, separated_tx,file_name)
+        am_modulation(msg_len_on_wire,msg_amp_rep, separated_tx,file_name)
     elif rep==1:
-        singlepulse_modulation(message_length_on_wire,message_amp_representation, separated_tx,file_name)
+        singlepulse_modulation(msg_len_on_wire,msg_amp_rep, separated_tx,file_name)
     else:
         print "fix the Coding scheme"
